@@ -33,7 +33,9 @@ if(NOT UNIX)
 endif()
 
 # Use the GNU C++ name demangler; if yes, this disables using LibIberty
-set(USE_GNU_DEMANGLER ON CACHE BOOL "Use the GNU C++ name demangler")
+if (PLATFORM MATCHES linux OR PLATFORM MATCHES freebsd)
+  set(USE_GNU_DEMANGLER ON CACHE BOOL "Use the GNU C++ name demangler")
+endif()
 
 # If we don't want to use/build LibIberty, then leave
 if(USE_GNU_DEMANGLER)

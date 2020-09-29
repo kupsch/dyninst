@@ -423,12 +423,10 @@ class SYMTAB_EXPORT Symtab : public LookupInterface,
    bool fixSymRegion(Symbol *sym);
 
    bool fixSymModules(std::vector<Symbol *> &raw_syms);
-   bool demangleSymbols(std::vector<Symbol *> &rawsyms);
    bool createIndices(std::vector<Symbol *> &raw_syms, bool undefined);
    bool createAggregates();
 
    bool fixSymModule(Symbol *&sym);
-   bool demangleSymbol(Symbol *&sym);
    bool addSymbolToIndices(Symbol *&sym, bool undefined);
    bool addSymbolToAggregates(const Symbol *sym);
    bool doNotAggregate(const Symbol *sym);

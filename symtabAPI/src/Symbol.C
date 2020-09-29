@@ -80,23 +80,11 @@ SYMTAB_EXPORT string Symbol::getMangledName() const
 SYMTAB_EXPORT string Symbol::getPrettyName() const 
 {
   std::string working_name = mangledName_;
+#ifdef os_windows
   // Accoring to Itanium C++ ABI, all mangled names start with _Z
   if (mangledName_.size() < 2 || mangledName_[0] != '_' || mangledName_[1] != 'Z') return working_name;
-#if !defined(os_windows)        
-  //Remove extra stabs information
-  size_t colon, atat;
-  colon = working_name.find(":");
-  if(colon != string::npos) 
-  {
-    working_name = working_name.substr(0, colon);
-  }
-  atat = working_name.find("@@");
-  if(atat != string::npos)
-  {
-    working_name = working_name.substr(0, atat);
-  }
-  
-#endif     
+#endif
+
   // Assume not native (ie GNU) if we don't have an associated Symtab for some reason
   bool native_comp = getSymtab() ? getSymtab()->isNativeCompiler() : false;
   
@@ -112,17 +100,10 @@ SYMTAB_EXPORT string Symbol::getPrettyName() const
 SYMTAB_EXPORT string Symbol::getTypedName() const 
 {
   std::string working_name = mangledName_;
+#ifdef os_windows
   // Accoring to Itanium C++ ABI, all mangled names start with _Z
   if (mangledName_.size() < 2 || mangledName_[0] != '_' || mangledName_[1] != 'Z') return working_name;
-  #if !defined(os_windows)        
-  //Remove extra stabs information
-  size_t colon;
-  colon = working_name.find(":");
-  if(colon != string::npos) 
-  {
-    working_name = working_name.substr(0, colon);
-  }
-#endif     
+#endif
   // Assume not native (ie GNU) if we don't have an associated Symtab for some reason
   bool native_comp = getSymtab() ? getSymtab()->isNativeCompiler() : false;
   

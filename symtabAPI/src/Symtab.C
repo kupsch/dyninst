@@ -738,19 +738,6 @@ bool Symtab::fixSymModules(std::vector<Symbol *> &raw_syms)
     return true;
 }
 
-/*
- * demangleSymbols
- *
- * Perform name demangling on all symbols.
- */
-
-bool Symtab::demangleSymbols(std::vector<Symbol *> &raw_syms) 
-{
-    for (unsigned i = 0; i < raw_syms.size(); i++) {
-        demangleSymbol(raw_syms[i]);
-    }
-    return true;
-}
 
 /*
  * createIndices
@@ -798,61 +785,6 @@ bool Symtab::fixSymModule(Symbol *&sym)
     return true;
 }
 
-bool Symtab::demangleSymbol(Symbol *&sym) {
-   bool typed_demangle = false;
-   if (sym->getType() == Symbol::ST_FUNCTION) typed_demangle = true;
-
-   // This is a bit of a hack; we're trying to demangle undefined symbols which don't necessarily
-   // have a ST_FUNCTION type. 
-   if (sym->getRegion() == NULL && !sym->isAbsolute() && !sym->isCommonStorage())
-      typed_demangle = true;
-
-   if (typed_demangle) {
-      Module *rawmod = sym->getModule();
-
-      // At this point we need to generate the following information:
-      // A symtab name.
-      // A pretty (demangled) name.
-      // The symtab name goes in the global list as well as the module list.
-      // Same for the pretty name.
-      // Finally, check addresses to find aliases.
-      
-      std::string mangled_name = sym->getMangledName();
-      std::string working_name = mangled_name;
-      
-#if !defined(os_windows)        
-      //Remove extra stabs information
-       size_t colon = working_name.find(":");
-       if(colon != std::string::npos) {
-           working_name = working_name.substr(0, colon);
-       }
-#endif
-      
-      std::string pretty_name = working_name;
-      std::string typed_name = working_name;
-      
-      if (!buildDemangledName(working_name, pretty_name, typed_name,
-                              nativeCompiler, (rawmod ? rawmod->language() : lang_Unknown))) {
-         pretty_name = working_name;
-      }
-      
-      //sym->prettyName_ = pretty_name;
-      //sym->typedName_ = typed_name;
-   }
-   else {
-       // All cases where there really shouldn't be a mangled
-      // name, since mangling is for functions.
-      
-      char *prettyName = P_cplus_demangle(sym->getMangledName().c_str(), nativeCompiler, false);
-      if (prettyName) {
-	//sym->prettyName_ = std::string(prettyName);
-         // XXX caller-freed
-         free(prettyName); 
-      }
-   }
-
-   return true;
-}
 
 bool Symtab::addSymbolToIndices(Symbol *&sym, bool undefined) 
 {
