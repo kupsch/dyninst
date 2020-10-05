@@ -29,9 +29,9 @@ find_package(Threads)
 include(Boost)
 include(ThreadingBuildingBlocks)
 include(ElfUtils)
-include(LibIberty)
 
 include(shared)
+include(LibIberty)
 
 if(USE_OpenMP)
   find_package(OpenMP REQUIRED)
