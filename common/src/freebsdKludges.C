@@ -41,8 +41,7 @@ using std::map;
 
 #include "symbolDemangleWithCache.h"
 
-char * P_cplus_demangle( const char * symbol, bool /*nativeCompiler*/,
-				bool includeTypes )
+char * P_cplus_demangle( const char * symbol, bool includeTypes )
 {
     char *demangled = symbol_demangle_with_cache(symbol, includeTypes);
     return demangled;

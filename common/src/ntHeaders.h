@@ -214,7 +214,7 @@ inline int P_unlink(const char *pathname) {
 }
 extern char *cplus_demangle(char *, int, bool );
 /* We can't export this, it's inline. */
-inline char * P_cplus_demangle( const char * symbol, bool /* nativeCompiler */, bool includeTypes = false ) {
+inline char * P_cplus_demangle( const char * symbol, bool includeTypes = false ) {
    return cplus_demangle( (char *)symbol, 0, includeTypes );
    }
 

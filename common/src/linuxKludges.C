@@ -202,8 +202,7 @@ unsigned long long PDYN_mulMillion(unsigned long long in) {
 
 #include "symbolDemangleWithCache.h"
 
-char * P_cplus_demangle( const char * symbol, bool /*nativeCompiler*/,
-				bool includeTypes )
+char * P_cplus_demangle( const char * symbol, bool includeTypes )
 {
     char *demangled = symbol_demangle_with_cache(symbol, includeTypes);
     return demangled;

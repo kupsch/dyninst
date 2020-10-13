@@ -73,7 +73,6 @@ using namespace Dyninst::SymtabAPI;
 using namespace std;
 
 static std::string errMsg;
-extern bool parseCompilerType(Object *);
 
 static const int Symtab_major_version = DYNINST_MAJOR_VERSION;
 static const int Symtab_minor_version = DYNINST_MINOR_VERSION;
@@ -307,11 +306,6 @@ SYMTAB_EXPORT bool Symtab::isBigEndianDataEncoding() const
    return obj_private->isBigEndianDataEncoding();
 }
 
-SYMTAB_EXPORT bool Symtab::isNativeCompiler() const 
-{
-    return nativeCompiler; 
-}
-
 SYMTAB_EXPORT Symtab::Symtab(MappedFile *mf_) :
    AnnotatableSparse(),
    member_offset_(0),
@@ -321,7 +315,6 @@ SYMTAB_EXPORT Symtab::Symtab(MappedFile *mf_) :
    dataOffset_(0), dataLen_(0),
    is_a_out(false),
    main_call_addr_(0),
-   nativeCompiler(false),
    address_width_(sizeof(int)),
    code_ptr_(NULL), data_ptr_(NULL),
    entry_address_(0), base_address_(0), load_address_(0),
@@ -356,7 +349,6 @@ SYMTAB_EXPORT Symtab::Symtab() :
    dataOffset_(0), dataLen_(0),
    is_a_out(false),
    main_call_addr_(0),
-   nativeCompiler(false),
    address_width_(sizeof(int)),
    code_ptr_(NULL), data_ptr_(NULL),
    entry_address_(0), base_address_(0), load_address_(0),
@@ -550,101 +542,6 @@ void Symtab::indexed_symbols::erase(Symbol* s) {
         }
     }
 }
-
-// TODO -- is this g++ specific
-bool Symtab::buildDemangledName( const std::string &mangled, 
-      std::string &pretty,
-      std::string &typed,
-      bool nativeCompiler, 
-      supportedLanguages lang )
-{
-   /* The C++ demangling function demangles MPI__Allgather (and other MPI__
-    * functions with start with A) into the MPI constructor.  In order to
-    * prevent this a hack needed to be made, and this seemed the cleanest
-    * approach.
-    */
-
-   if ((mangled.length()>5) && (mangled.substr(0,5)==std::string("MPI__"))) 
-   {
-      return false;
-   }	  
-
-   /* If it's Fortran, eliminate the trailing underscores, if any. */
-   if (lang == lang_Fortran 
-         || lang == lang_CMFortran 
-         || lang == lang_Fortran_with_pretty_debug )
-   {
-      if ( mangled[ mangled.length() - 1 ] == '_' ) 
-      {
-         char * demangled = P_strdup( mangled.c_str() );
-         demangled[ mangled.length() - 1 ] = '\0';
-         pretty = std::string( demangled );
-
-         free ( demangled );
-         return true;
-      }
-      else 
-      {
-         /* No trailing underscores, do nothing */
-         return false;
-      }
-   } /* end if it's Fortran. */
-
-   //  Check to see if we have a gnu versioned symbol on our hands.
-   //  These are of the form <symbol>@<version> or <symbol>@@<version>
-   //
-   //  If we do, we want to create a "demangled" name for the one that
-   //  is of the form <symbol>@@<version> since this is, by definition,
-   //  the default.  The "demangled" name will just be <symbol>
-
-   //  NOTE:  this is just a 0th order approach to dealing with versioned
-   //         symbols.  We may need to do something more sophisticated
-   //         in the future.  JAW 10/03
-
-#if !defined(os_windows)
-
-   const char *atat;
-
-   if (NULL != (atat = strstr(mangled.c_str(), "@@"))) 
-   {
-        pretty = mangled.substr(0 /*start pos*/, 
-                        (int)(atat - mangled.c_str())/*len*/);
-        //char msg[256];
-        //sprintf(msg, "%s[%d]: 'demangling' versioned symbol: %s, to %s",
-        //          __FILE__, __LINE__, mangled.c_str(), pretty.c_str());
-
-        //cerr << msg << endl;
-        //logLine(msg);
-      
-        return true;
-    }
-
-#endif
-
-    bool retval = false;
-  
-    /* Try demangling it. */
-    char * demangled = P_cplus_demangle( mangled.c_str(), nativeCompiler, false);
-    if (demangled) 
-    {
-        pretty = std::string( demangled );
-        retval = true;
-    }
-  
-    char *t_demangled = P_cplus_demangle(mangled.c_str(), nativeCompiler, true);
-    if (t_demangled && (strcmp(t_demangled, demangled) != 0)) 
-    {
-        typed = std::string(t_demangled);
-        retval = true;
-    }
-
-    if (demangled)
-        free(demangled);
-    if (t_demangled)
-        free(t_demangled);
-
-    return retval;
-} /* end buildDemangledName() */
 
 
 /*
@@ -1155,7 +1052,6 @@ Symtab::Symtab(std::string filename, bool defensive_bin, bool &err) :
    dataOffset_(0), dataLen_(0),
    is_a_out(false),
    main_call_addr_(0),
-   nativeCompiler(false),
    address_width_(sizeof(int)),
    code_ptr_(NULL), data_ptr_(NULL),
    entry_address_(0), base_address_(0), load_address_(0),
@@ -1230,7 +1126,6 @@ Symtab::Symtab(unsigned char *mem_image, size_t image_size,
    dataOffset_(0), dataLen_(0),
    is_a_out(false),
    main_call_addr_(0),
-   nativeCompiler(false),
    address_width_(sizeof(int)),
    code_ptr_(NULL), data_ptr_(NULL),
    entry_address_(0), base_address_(0), load_address_(0),
@@ -1427,13 +1322,6 @@ bool Symtab::extractInfo(Object *linkedFile)
     is_eel_ = linkedFile->isEEL();
     linkedFile->getSegments(segments_);
 
-#if defined(os_linux) || defined(os_freebsd)
-    // make sure we're using the right demangler
-    
-    nativeCompiler = parseCompilerType(linkedFile);
-    //parsing_printf("isNativeCompiler: %d\n", nativeCompiler);
-#endif
-    
     // define all of the functions
     //statusLine("winnowing functions");
 
@@ -1522,7 +1410,6 @@ Symtab::Symtab(const Symtab& obj) :
    dataOffset_(obj.dataOffset_), dataLen_(obj.dataLen_),
    is_a_out(obj.is_a_out),
    main_call_addr_(obj.main_call_addr_),
-   nativeCompiler(obj.nativeCompiler),
    address_width_(sizeof(int)),
    code_ptr_(NULL), data_ptr_(NULL),
    entry_address_(0), base_address_(0), load_address_(0),

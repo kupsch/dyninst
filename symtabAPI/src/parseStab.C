@@ -106,7 +106,7 @@ void vectorNameMatchKLUDGE(Module *mod, char *demangled_sym, std::vector<Functio
     if (syms.size()) {
         l_mangled = syms[0]->getMangledName();
         
-        char * l_demangled_raw = P_cplus_demangle(l_mangled.c_str(), mod->exec()->isNativeCompiler());
+        char * l_demangled_raw = P_cplus_demangle(l_mangled.c_str());
         if( l_demangled_raw == NULL ) {
             l_demangled_raw = strdup(l_mangled.c_str());
         }
@@ -143,7 +143,7 @@ Function *mangledNameMatchKLUDGE(const char *pretty, const char *mangled,
     }
 
   // demangle name with extra parameters
-  char * demangled_sym = P_cplus_demangle( mangled, mod->exec()->isNativeCompiler(), true );
+  char * demangled_sym = P_cplus_demangle( mangled, true );
   if( demangled_sym == NULL ) {
   	demangled_sym = strdup( mangled );
   	assert( demangled_sym != NULL );
@@ -220,7 +220,7 @@ std::string Dyninst::SymtabAPI::parseStabString(Module *mod, int linenum, char *
    std::string mangledname = getIdentifier( stabstr, cnt );
 
    currentRawSymbolName = mangledname;
-   char * demangled = P_cplus_demangle( mangledname.c_str(), mod->exec()->isNativeCompiler() );
+   char * demangled = P_cplus_demangle( mangledname.c_str() );
    std::string name;
 
    if ( demangled == NULL ) 
@@ -2015,7 +2015,7 @@ static char *parseCPlusPlusInfo(Module *mod,
 	    className[3] = 'c';
 	    className[strlen(className)-1] = '\0';	// remove tailing "_"
 	    std::string methodName = std::string(className) + std::string(funcName) + std::string("_");
-		char * name = P_cplus_demangle( methodName.c_str(), mod->exec()->isNativeCompiler() );
+		char * name = P_cplus_demangle( methodName.c_str() );
 		if( name != NULL ) {
 			funcName = strrchr( name, ':' );
 			if( funcName ) { funcName++; }

@@ -1562,7 +1562,7 @@ bool DwarfWalker::addFuncToContainer(boost::shared_ptr<Type> returnType) {
       functions, but confuses the tests.  Since Type uses vectors
       to hold field names, however, duplicate -- demangled names -- are OK. */
 
-   char * demangledName = P_cplus_demangle( curName().c_str(), isNativeCompiler() );
+   char * demangledName = P_cplus_demangle( curName().c_str() );
    std::string toUse;
 
    if (!demangledName) {

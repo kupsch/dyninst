@@ -255,9 +255,7 @@ inline int P_rexec(char **ahost, u_short inport, char *user,
 
 #define DMGL_ARM         (1 << 11)      /* Use C++ ARM name mangling */ 
 
-extern "C" char *cplus_demangle(char *, int);
-extern void dedemangle( char * demangled, char * dedemangled );
-extern COMMON_EXPORT char * P_cplus_demangle( const char * symbol, bool nativeCompiler,
+extern COMMON_EXPORT char * P_cplus_demangle( const char * symbol,
 				bool includeTypes = false );
 
 inline int P_mkdir(const char *pathname, mode_t mode) {

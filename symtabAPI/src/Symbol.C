@@ -85,10 +85,7 @@ SYMTAB_EXPORT string Symbol::getPrettyName() const
   if (mangledName_.size() < 2 || mangledName_[0] != '_' || mangledName_[1] != 'Z') return working_name;
 #endif
 
-  // Assume not native (ie GNU) if we don't have an associated Symtab for some reason
-  bool native_comp = getSymtab() ? getSymtab()->isNativeCompiler() : false;
-  
-  char *prettyName = P_cplus_demangle(working_name.c_str(), native_comp, false);
+  char *prettyName = P_cplus_demangle(working_name.c_str(), false);
   if (prettyName) {
     working_name = std::string(prettyName);
     // XXX caller-freed
@@ -104,10 +101,8 @@ SYMTAB_EXPORT string Symbol::getTypedName() const
   // Accoring to Itanium C++ ABI, all mangled names start with _Z
   if (mangledName_.size() < 2 || mangledName_[0] != '_' || mangledName_[1] != 'Z') return working_name;
 #endif
-  // Assume not native (ie GNU) if we don't have an associated Symtab for some reason
-  bool native_comp = getSymtab() ? getSymtab()->isNativeCompiler() : false;
   
-  char *prettyName = P_cplus_demangle(working_name.c_str(), native_comp, true);
+  char *prettyName = P_cplus_demangle(working_name.c_str(), true);
   if (prettyName) {
     working_name = std::string(prettyName);
     // XXX caller-freed
