@@ -239,7 +239,7 @@ inline int P_rexec(char **ahost, u_short inport, char *user,
 }
 #endif
 
-extern char * COMMON_EXPORT P_cplus_demangle( const char * symbol,
+extern std::string COMMON_EXPORT P_cplus_demangle( const std::string &symbol,
 				bool includeTypes = false );
 
 inline int P_mkdir(const char *pathname, mode_t mode) {

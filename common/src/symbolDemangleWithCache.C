@@ -29,38 +29,35 @@
  */
 
 
-#include <string.h>
+#include <string>
 #include <stdlib.h>
 #include "symbolDemangle.h"
+#include "symbolDemangleWithCache.h"
 
-static thread_local char* lastSymName = nullptr;
+static thread_local std::string lastSymName;
 static thread_local bool lastIncludeParams = false;
-static thread_local char* lastDemangled = nullptr;
+static thread_local std::string lastDemangled;
 
 
 
 // Returns a demangled symbol using symbol_demangle, but includes a per thread
 // cache of the previous demangling.
 //
-char *symbol_demangle_with_cache(const char *symName, bool includeParams)
+std::string symbol_demangle_with_cache(const std::string &symName, bool includeParams)
 {
-    if (lastSymName && lastDemangled && includeParams == lastIncludeParams && !strcmp(symName, lastSymName))  {
+    if (includeParams == lastIncludeParams && symName == lastSymName)  {
 	// found hit, return a copy of cached demangling
-	return strdup(lastDemangled);
+	return lastDemangled;
     }
 
-    char *demangled = symbol_demangle(symName, includeParams);
+    char *demangled = symbol_demangle(symName.c_str(), includeParams);
 
     // update cache
-    if (lastSymName)  {
-	free(lastSymName);
-    }
-    if (lastDemangled)  {
-	free(lastDemangled);
-    }
-    lastSymName = strdup(symName);
+    lastSymName = symName;
     lastIncludeParams = includeParams;
-    lastDemangled = strdup(demangled);
+    lastDemangled = demangled;
 
-    return demangled;
+    free(demangled);
+
+    return lastDemangled;
 }

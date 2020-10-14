@@ -79,36 +79,14 @@ SYMTAB_EXPORT string Symbol::getMangledName() const
 
 SYMTAB_EXPORT string Symbol::getPrettyName() const 
 {
-  std::string working_name = mangledName_;
-#ifdef os_windows
-  // Accoring to Itanium C++ ABI, all mangled names start with _Z
-  if (mangledName_.size() < 2 || mangledName_[0] != '_' || mangledName_[1] != 'Z') return working_name;
-#endif
-
-  char *prettyName = P_cplus_demangle(working_name.c_str(), false);
-  if (prettyName) {
-    working_name = std::string(prettyName);
-    // XXX caller-freed
-    free(prettyName); 
-  }
-  return working_name;
+  std::string prettyName = P_cplus_demangle(mangledName_, false);
+  return prettyName;
 }
 
 SYMTAB_EXPORT string Symbol::getTypedName() const 
 {
-  std::string working_name = mangledName_;
-#ifdef os_windows
-  // Accoring to Itanium C++ ABI, all mangled names start with _Z
-  if (mangledName_.size() < 2 || mangledName_[0] != '_' || mangledName_[1] != 'Z') return working_name;
-#endif
-  
-  char *prettyName = P_cplus_demangle(working_name.c_str(), true);
-  if (prettyName) {
-    working_name = std::string(prettyName);
-    // XXX caller-freed
-    free(prettyName); 
-  }
-  return working_name;
+  std::string typedName = P_cplus_demangle(mangledName_, true);
+  return typedName;
 }
 
 bool Symbol::setOffset(Offset newOffset)

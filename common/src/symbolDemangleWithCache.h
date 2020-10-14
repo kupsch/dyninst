@@ -28,5 +28,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include <string>
 
-char *symbol_demangle_with_cache(const char *symName, bool includeParams);
+std::string symbol_demangle_with_cache(const std::string &symName, bool includeParams);
