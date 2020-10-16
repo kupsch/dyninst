@@ -40,10 +40,10 @@ static thread_local std::string lastDemangled;
 
 
 
-// Returns a demangled symbol using symbol_demangle, but includes a per thread
-// cache of the previous demangling.
+// Returns a demangled symbol using symbol_demangle, but includes a per thread,
+// single-entry cache of the previous demangling.
 //
-std::string symbol_demangle_with_cache(const std::string &symName, bool includeParams)
+std::string const& symbol_demangle_with_cache(const std::string &symName, bool includeParams)
 {
     if (includeParams == lastIncludeParams && symName == lastSymName)  {
 	// found hit, return a copy of cached demangling
@@ -51,6 +51,10 @@ std::string symbol_demangle_with_cache(const std::string &symName, bool includeP
     }
 
     char *demangled = symbol_demangle(symName.c_str(), includeParams);
+
+    if (!demangled)  {
+	throw std::bad_alloc();  // malloc failed
+    }
 
     // update cache
     lastSymName = symName;
