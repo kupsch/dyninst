@@ -79,14 +79,12 @@ SYMTAB_EXPORT string Symbol::getMangledName() const
 
 SYMTAB_EXPORT string Symbol::getPrettyName() const 
 {
-  std::string prettyName = P_cplus_demangle(mangledName_, false);
-  return prettyName;
+  return P_cplus_demangle(mangledName_, false);
 }
 
 SYMTAB_EXPORT string Symbol::getTypedName() const 
 {
-  std::string typedName = P_cplus_demangle(mangledName_, true);
-  return typedName;
+  return P_cplus_demangle(mangledName_, true);
 }
 
 bool Symbol::setOffset(Offset newOffset)

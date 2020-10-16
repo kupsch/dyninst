@@ -204,8 +204,7 @@ unsigned long long PDYN_mulMillion(unsigned long long in) {
 
 std::string P_cplus_demangle( const std::string &symbol, bool includeTypes )
 {
-    std::string demangled = symbol_demangle_with_cache(symbol, includeTypes);
-    return demangled;
+    return symbol_demangle_with_cache(symbol, includeTypes);
 } /* end P_cplus_demangle() */
 
 
