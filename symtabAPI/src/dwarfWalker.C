@@ -1568,7 +1568,7 @@ bool DwarfWalker::addFuncToContainer(boost::shared_ptr<Type> returnType) {
    // rfind finds the last occurrence of ':'; add 1 to get past it.
    size_t offset = demangledName.rfind(':');
    if (offset != demangledName.npos) {
-      demangledName.erase(offset+1);
+      demangledName.erase(0, offset+1);
    }
 
    curEnclosure()->asFieldListType().addField( demangledName, Type::make_shared<typeFunction>(
