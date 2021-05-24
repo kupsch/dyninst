@@ -5056,6 +5056,70 @@ std::string Object::getFileName() const {
 }
 
 
+void Object::PrintFlags(int style) const {
+    using namespace std;
+    if (style == 0)  {
+        #define PRINT(x) std::setw(20) << left << #x << "  " << (x) << "\n"
+        #define PRINTSTRING(x) std::setw(20) << left << #x << "  " << ((x) ? (x) : "(null)") << "\n"
+        cout
+            << PRINT(hasBitsAlloc())
+            << PRINT(hasProgramLoad())
+            << PRINT(no_of_sections())
+            << PRINT(hasDebugSections())
+            << PRINT(hasModinfo())
+            << PRINT(hasGnuLinkonceThisModule())
+            << PRINT(objType() == obj_Executable)
+            << PRINT(objType() == obj_SharedLib)
+            << PRINT(getDynamicAddr())
+            << PRINT(hasPieFlag())
+            << PRINTSTRING(getSoname())
+            << PRINTSTRING(interpreter_name())
+            << PRINT(hasDtDebug())
+
+            << PRINT(isLoadable())
+            << PRINT(isLinuxKernelModule())
+            << PRINT(isDebugOnly())
+            << PRINT(isStaticBinary())
+            << PRINT(isOnlyExecutable())
+            << PRINT(isExecutable())
+            << PRINT(isSharedLibrary())
+            << PRINT(isOnlySharedLibrary())
+            << endl;
+    }  else if (style == 1 || style == 2)  {
+        #define PRINTFLAG(c,x) (x ? #c : "-")
+        cout
+            << PRINTFLAG(b, hasBitsAlloc())
+            << PRINTFLAG(L, hasProgramLoad())
+            << PRINTFLAG(S, no_of_sections())
+            << PRINTFLAG(g, hasDebugSections())
+            << PRINTFLAG(m, hasModinfo())
+            << PRINTFLAG(o, hasGnuLinkonceThisModule())
+            << PRINTFLAG(X, objType() == obj_Executable)
+            << PRINTFLAG(Y, objType() == obj_SharedLib)
+            << PRINTFLAG(D, getDynamicAddr())
+            << PRINTFLAG(P, hasPieFlag())
+            << PRINTFLAG(s, getSoname())
+            << PRINTFLAG(I, interpreter_name())
+            << PRINTFLAG(d, hasDtDebug())
+            << "    "
+            << PRINTFLAG(l, isLoadable())
+            << PRINTFLAG(K, isLinuxKernelModule())
+            << PRINTFLAG(d, isDebugOnly())
+            << PRINTFLAG(*, isStaticBinary())
+            << PRINTFLAG(x, isOnlyExecutable())
+            << PRINTFLAG(p, isExecutable())
+            << PRINTFLAG(S, isSharedLibrary())
+            << PRINTFLAG(L, isOnlySharedLibrary())
+            ;
+        if (style == 1)  {
+            cout << endl;
+        }
+    }  else  {
+        cout << "unknown style " << style << endl;
+    }
+}
+
+
 // Object::isLoadable
 //   True if this object is a loadable executable or library.
 //   This function should produce the same result as the

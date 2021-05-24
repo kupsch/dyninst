@@ -396,6 +396,7 @@ public:
     bool hasModinfo() const { return hasModinfo_; }
     bool hasGnuLinkonceThisModule() const { return hasGnuLinkonceThisModule_; }
     bool isLoadable() const;
+    SYMTAB_EXPORT void PrintFlags(int style) const;
     SYMTAB_EXPORT bool isOnlyExecutable() const;
     SYMTAB_EXPORT bool isExecutable() const;
     SYMTAB_EXPORT bool isSharedLibrary() const;
