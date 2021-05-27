@@ -122,7 +122,6 @@ class PCProcess;
 // File descriptor information
 class fileDescriptor {
  public:
-    static string emptyString;
     // Vector requires an empty constructor
     fileDescriptor();
 
@@ -135,7 +134,6 @@ class fileDescriptor {
 		fileHandle_(INVALID_HANDLE_VALUE),
 #endif
 		file_(file),
-        member_(emptyString),
         code_(code),
         data_(data),
 		dynamic_(dynamic),
@@ -152,7 +150,6 @@ class fileDescriptor {
 		fileHandle_(INVALID_HANDLE_VALUE),
 #endif
 		file_(file),
-        member_(emptyString),
         code_(code),
         data_(data),
 		dynamic_(dynamic),
