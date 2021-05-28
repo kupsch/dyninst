@@ -127,8 +127,7 @@ class fileDescriptor {
 
     // Some platforms have split code and data. If yours is not one of them,
     // hand in the same address for code and data.
-    fileDescriptor(string file, Address code, Address data, 
-			Address dynamic=0) :
+    fileDescriptor(string file, Address code, Address data) : 
 #if defined(os_windows)
 		procHandle_(INVALID_HANDLE_VALUE),
 		fileHandle_(INVALID_HANDLE_VALUE),
@@ -136,15 +135,13 @@ class fileDescriptor {
 		file_(file),
         code_(code),
         data_(data),
-		dynamic_(dynamic),
         pid_(0),
         length_(0),
         rawPtr_(NULL) {}
 
     // ctor for non-files
     fileDescriptor(string file, Address code, Address data, 
-                   Address length, void* rawPtr,
-		    Address dynamic=0) :
+                   Address length, void* rawPtr) :
 #if defined(os_windows)
 		procHandle_(INVALID_HANDLE_VALUE),
 		fileHandle_(INVALID_HANDLE_VALUE),
@@ -152,7 +149,6 @@ class fileDescriptor {
 		file_(file),
         code_(code),
         data_(data),
-		dynamic_(dynamic),
         pid_(0),
         length_(length),
         rawPtr_(rawPtr) {}
@@ -181,7 +177,6 @@ class fileDescriptor {
      Address data() const { return data_; }
      int pid() const { return pid_; }
 //     Address loadAddr() const { return loadAddr_; }
-     Address dynamic() const { return dynamic_; }
      void setLoadAddr(Address a) { 
         code_ += a;
         data_ += a;
@@ -213,7 +208,6 @@ private:
      string member_;
      Address code_;
      Address data_;
-     Address dynamic_; //Used on Linux, address of dynamic section.
      int pid_;
      Address length_;        // set only if this is not really a file
      void* rawPtr_; // set only if this is not really a file
