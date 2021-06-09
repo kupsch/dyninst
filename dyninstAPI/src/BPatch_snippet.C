@@ -976,14 +976,14 @@ BPatch_variableExpr::BPatch_variableExpr(const char *in_name,
 
 BPatch_variableExpr::BPatch_variableExpr(BPatch_addressSpace *in_addSpace,
                                          AddressSpace *ll_addSpace, int_variable *iv,
-                                         BPatch_type *type)
+                                         BPatch_type *type_)
   : name(),
     appAddSpace(in_addSpace),
     lladdrSpace(ll_addSpace),
     address(NULL),
     scope(NULL),
     isLocal(false),
-    type(type),
+    type(type_),
     intvar(NULL)
 {
   const image_variable* img_var = NULL;
@@ -994,7 +994,7 @@ BPatch_variableExpr::BPatch_variableExpr(BPatch_addressSpace *in_addSpace,
     intvar = iv;
     img_var = iv->ivar();
   }
-  size = type->getSize();
+  size = type_->getSize();
   if(img_var)
   {
     ast_wrapper = AstNodePtr(AstNode::operandNode(AstNode::variableValue, img_var));
@@ -1006,7 +1006,7 @@ BPatch_variableExpr::BPatch_variableExpr(BPatch_addressSpace *in_addSpace,
 
 
   ast_wrapper->setTypeChecking(BPatch::bpatch->isTypeChecked());
-  ast_wrapper->setType(type);
+  ast_wrapper->setType(type_);
 
 }
 
