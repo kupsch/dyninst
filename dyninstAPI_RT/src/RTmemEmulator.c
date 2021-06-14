@@ -50,7 +50,14 @@ extern void DYNINST_stopThread(void *, void *, void *, void *);
 #if _MSC_VER
 struct MemoryMapper RTmemoryMapper = {0, 0, 0, 0 };
 #else
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
 struct MemoryMapper RTmemoryMapper = {0, 0, 0, 0, {} };
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 #endif
 extern FILE *stOut;
 

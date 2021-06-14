@@ -169,6 +169,10 @@ typedef struct {
 #if defined(_MSC_VER)
 #pragma warning(disable:4200)
 #endif
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
 struct trap_mapping_header {
    uint32_t signature;
    uint32_t num_entries;
@@ -178,6 +182,9 @@ struct trap_mapping_header {
    uint64_t high_entry;
    trapMapping_t traps[]; //Don't change this to a pointer, despite any compiler warnings
 };
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
 #define MAX_MEMORY_MAPPER_ELEMENTS 1024
 
