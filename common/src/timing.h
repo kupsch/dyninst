@@ -55,7 +55,7 @@ COMMON_EXPORT timeUnit getCyclesPerSecond();
 /* Platform dependent, used by initCyclesPerSecond(). */
 COMMON_EXPORT double calcCyclesPerSecondOS();
 
-enum { cpsMethodNotAvailable = -1 };
+constexpr auto cpsMethodNotAvailable = -1.0;
 
 /* A default stab at getting the cycle rate.  Used by calcCyclesPerSecondOS
    if a method which gets a more precise value isn't available. */
