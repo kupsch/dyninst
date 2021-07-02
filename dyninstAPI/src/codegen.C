@@ -106,7 +106,7 @@ codeGen::codeGen(unsigned size) :
 {
     buffer_ = (codeBuf_t *)malloc(size+codeGenPadding);
     if (!buffer_) {
-       fprintf(stderr, "%s[%d]: malloc failed: size is %d + codeGenPadding = %d\n", FILE__, __LINE__, size, codeGenPadding);
+       fprintf(stderr, "%s[%d]: malloc failed: size is %u + codeGenPadding = %u\n", FILE__, __LINE__, size, codeGenPadding);
 	}
     assert(buffer_);
     memset(buffer_, 0, size+codeGenPadding);
@@ -232,7 +232,7 @@ void codeGen::allocate(unsigned size)
    offset_ = 0;
    allocated_ = true;
    if (!buffer_) {
-      fprintf(stderr, "%s[%d]:  malloc (%d) failed: %s\n", FILE__, __LINE__, size, strerror(errno));
+      fprintf(stderr, "%s[%d]:  malloc (%u) failed: %s\n", FILE__, __LINE__, size, strerror(errno));
    }
    assert(buffer_);
 }
@@ -358,7 +358,7 @@ void *codeGen::start_ptr() const {
 void *codeGen::cur_ptr() const {
     assert(buffer_);
     if (sizeof(codeBuf_t) != CODE_GEN_OFFSET_SIZE)
-        fprintf(stderr, "ERROR: sizeof codeBuf %ld, OFFSET %d\n",
+        fprintf(stderr, "ERROR: sizeof codeBuf %ld, OFFSET %u\n",
                 (long) sizeof(codeBuf_t), CODE_GEN_OFFSET_SIZE);
     assert(sizeof(codeBuf_t) == CODE_GEN_OFFSET_SIZE);
     codeBuf_t *ret = buffer_;
@@ -426,7 +426,7 @@ void codeGen::moveIndex(int disp) {
     int cur = getIndex() * CODE_GEN_OFFSET_SIZE;
     cur += disp;
     if (cur % CODE_GEN_OFFSET_SIZE) {
-        fprintf(stderr, "Error in codeGen: current index %d/%d, moving by %d, mod %d\n",
+        fprintf(stderr, "Error in codeGen: current index %u/%d, moving by %d, mod %u\n",
                 getIndex(), cur, disp, cur % CODE_GEN_OFFSET_SIZE);
     }
     assert((cur % CODE_GEN_OFFSET_SIZE) == 0);
