@@ -139,6 +139,12 @@ void getFrSpec(int64_t n, int64_t d, double *ra, double *rb, int *rsign) {
   *rb = static_cast<double>(lowerI) / static_cast<double>(d);
 }
 
+#if defined(__GNUC__)
+// Ignore float equal warning
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
+
 // the gcd of the denominators could easily grow beyond the int64 max
 // so implement using doubles
 bool operator>(const fraction &a, const fraction &b) {
@@ -166,6 +172,10 @@ bool operator<(const fraction &a, const fraction &b) {
   if(bs == -1) { bx = -bx; by = -by; }
   return (ax < bx || (ax == bx && ay < by));
 }
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
 bool operator>=(const fraction &a, const fraction &b) {
   return ((a > b) || (a == b));
