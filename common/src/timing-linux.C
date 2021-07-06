@@ -59,7 +59,7 @@ double calcCyclesPerSecondOS()
 {
   double cps;
   cps = calcCyclesPerSecond_sys();
-  if(cps == cpsMethodNotAvailable) {
+  if(cps < 0.0) {
      return 0.0;
   }
   return cps;
