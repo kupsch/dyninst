@@ -358,7 +358,7 @@ void *codeGen::start_ptr() const {
 void *codeGen::cur_ptr() const {
     assert(buffer_);
     if (sizeof(codeBuf_t) != CODE_GEN_OFFSET_SIZE)
-        fprintf(stderr, "ERROR: sizeof codeBuf %ld, OFFSET %u\n",
+        fprintf(stderr, "ERROR: sizeof codeBuf %ld, OFFSET %d\n",
                 (long) sizeof(codeBuf_t), CODE_GEN_OFFSET_SIZE);
     assert(sizeof(codeBuf_t) == CODE_GEN_OFFSET_SIZE);
     codeBuf_t *ret = buffer_;
@@ -426,7 +426,7 @@ void codeGen::moveIndex(int disp) {
     int cur = getIndex() * CODE_GEN_OFFSET_SIZE;
     cur += disp;
     if (cur % CODE_GEN_OFFSET_SIZE) {
-        fprintf(stderr, "Error in codeGen: current index %u/%d, moving by %d, mod %u\n",
+        fprintf(stderr, "Error in codeGen: current index %u/%d, moving by %d, mod %d\n",
                 getIndex(), cur, disp, cur % CODE_GEN_OFFSET_SIZE);
     }
     assert((cur % CODE_GEN_OFFSET_SIZE) == 0);
