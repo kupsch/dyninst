@@ -50,7 +50,7 @@
 #include "instructionAPI/h/InstructionDecoder.h"
 
 #if defined(arch_x86) || defined(arch_x86_64)
-#define CODE_GEN_OFFSET_SIZE 1
+#define CODE_GEN_OFFSET_SIZE 1U
 #else
 #define CODE_GEN_OFFSET_SIZE (instruction::size())
 #endif
@@ -358,8 +358,8 @@ void *codeGen::start_ptr() const {
 void *codeGen::cur_ptr() const {
     assert(buffer_);
     if (sizeof(codeBuf_t) != CODE_GEN_OFFSET_SIZE)
-        fprintf(stderr, "ERROR: sizeof codeBuf %ld, OFFSET %d\n",
-                (long) sizeof(codeBuf_t), CODE_GEN_OFFSET_SIZE);
+        fprintf(stderr, "ERROR: sizeof codeBuf %zu, OFFSET %u\n",
+                sizeof(codeBuf_t), CODE_GEN_OFFSET_SIZE);
     assert(sizeof(codeBuf_t) == CODE_GEN_OFFSET_SIZE);
     codeBuf_t *ret = buffer_;
     ret += offset_;
@@ -426,7 +426,7 @@ void codeGen::moveIndex(int disp) {
     int cur = getIndex() * CODE_GEN_OFFSET_SIZE;
     cur += disp;
     if (cur % CODE_GEN_OFFSET_SIZE) {
-        fprintf(stderr, "Error in codeGen: current index %u/%d, moving by %d, mod %d\n",
+        fprintf(stderr, "Error in codeGen: current index %u/%d, moving by %d, mod %u\n",
                 getIndex(), cur, disp, cur % CODE_GEN_OFFSET_SIZE);
     }
     assert((cur % CODE_GEN_OFFSET_SIZE) == 0);
