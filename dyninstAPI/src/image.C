@@ -454,7 +454,7 @@ class FindMainVisitor : public ASTVisitor
         }
 
         return c->ptr();
-    };
+    }
 
     virtual ASTPtr visit(DataflowAPI::VariableAST* v)
     {
