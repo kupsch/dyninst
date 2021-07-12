@@ -49,7 +49,7 @@ class BPatch_localVarCollection{
   std::unordered_map<std::string, BPatch_localVar *> localVariablesByName;
 
 public:
-  BPatch_localVarCollection() {};
+  BPatch_localVarCollection() {}
   ~BPatch_localVarCollection();
 
   void addLocalVar(BPatch_localVar * var);

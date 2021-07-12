@@ -234,7 +234,7 @@ template <class DataType, class KeyType> class ListBase {
 template <class DataType> class List : public ListBase<DataType, void*> {
    typedef void* KeyType;
  public:
-   List() : ListBase<DataType, KeyType>() { };
+   List() : ListBase<DataType, KeyType>() { }
    List(const List &fromList) : ListBase<DataType, KeyType>(fromList) { }
    ~List() { }  // ~ListBase will be called
    friend std::ostream &operator<<(std::ostream &os, 
@@ -263,7 +263,7 @@ template <class DataType> class List : public ListBase<DataType, void*> {
 template <class DataType, class KeyType> class ListWithKey : 
 public ListBase<DataType, KeyType> {
  public:
-   ListWithKey() : ListBase<DataType, KeyType>() { };
+   ListWithKey() : ListBase<DataType, KeyType>() { }
    ListWithKey(const ListWithKey &fromList) : 
       ListBase<DataType, KeyType>(fromList) {}
    ~ListWithKey() { }  // ~ListBase will be called
