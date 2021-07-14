@@ -180,7 +180,7 @@ void registerSpace::initialize32() {
     // Everyone else
     for (unsigned i = r13; i <= r31; ++i) {
       char name[32];
-      sprintf(name, "r%2d", i-r0);
+      sprintf(name, "r%u", i-r0);
       registers.push_back(new registerSlot(i, name,
 					   false, 
 					   registerSlot::liveAlways,
@@ -208,7 +208,7 @@ void registerSpace::initialize32() {
 
     for (unsigned i = fpr0; i <= fpr13; i++) {
         char buf[128];
-        sprintf(buf, "fpr%d", i - fpr0);
+        sprintf(buf, "fpr%u", i - fpr0);
         registers.push_back(new registerSlot(i,
                                              buf,
                                              false,
@@ -318,7 +318,7 @@ void registerSpace::initialize64() {
     // Everyone else
     for (unsigned i = r13; i <= r31; ++i) {
       char name[32];
-      sprintf(name, "r%2d", i-r0);
+      sprintf(name, "r%u", i-r0);
       registers.push_back(new registerSlot(i, name,
 					   false, 
 					   registerSlot::liveAlways,
@@ -347,7 +347,7 @@ void registerSpace::initialize64() {
 
     for (unsigned i = fpr0; i <= fpr13; i++) {
         char buf[128];
-        sprintf(buf, "fpr%d", i - fpr0);
+        sprintf(buf, "fpr%u", i - fpr0);
         registers.push_back(new registerSlot(i,
                                              buf,
                                              false,
@@ -1520,9 +1520,8 @@ Register EmitterPOWER::emitCall(opCode ocode,
 	// This is not necessarily true; more then 8 arguments could be passed,
 	// the first 8 need to be in registers while the others need to be on
 	// the stack, -- sec 3/1/97
-       std::string msg = "Too many arguments to function call in instrumentation code:"
-	    " only 8 arguments can (currently) be passed on the POWER architecture.\n";
-	bperr( msg.c_str());
+       bperr("Too many arguments to function call in instrumentation code:"
+	    " only 8 arguments can (currently) be passed on the POWER architecture.\n");
 	showErrorCallback(94,msg);
 	exit(-1);
     }
@@ -1821,7 +1820,7 @@ static inline void restoreGPRtoGPR(codeGen &gen,
 //        insnCodeGen::generateImm(gen, Lop, dest, REG_SP,
 //                                 gpr_off + reg*gpr_size);
     else {
-        bperr( "GPR %d should not be restored...", reg);
+        bperr( "GPR %u should not be restored...", reg);
         assert(0);
     }
     //bperr( "Loading reg %d (into reg %d) at 0x%x off the stack\n", 
@@ -3438,7 +3437,7 @@ void EmitterPOWER::emitLoadShared(opCode op, Register dest, const image_variable
 
    // load register with address from jump slot
 
-   inst_printf("emitLoadShared addr 0x%lx curr adress 0x%lx offset %ld 0x%lx size %d\n", 
+   inst_printf("emitLoadShared addr 0x%lx curr adress 0x%lx offset %lu 0x%lx size %d\n", 
    	addr, gen.currAddr(), addr - gen.currAddr()+4, addr - gen.currAddr()+4, size);
    Register scratchReg = gen.rs()->getScratchRegister(gen, true);
 
@@ -3448,7 +3447,7 @@ void EmitterPOWER::emitLoadShared(opCode op, Register dest, const image_variable
    	stackSize = insnCodeGen::createStackFrame(gen, 1, freeReg, excludeReg);
    	assert (stackSize == 1);
    	scratchReg = freeReg[0];
-   	inst_printf("emitLoadrelative - after new stack frame - addr 0x%lx curr adress 0x%lx offset %ld 0x%lx size %d\n", 
+   	inst_printf("emitLoadrelative - after new stack frame - addr 0x%lx curr adress 0x%lx offset %lu 0x%lx size %d\n", 
 		addr, gen.currAddr(), addr - gen.currAddr()+4, addr - gen.currAddr()+4, size);
    }
 
@@ -3497,7 +3496,7 @@ void EmitterPOWER::emitStoreShared(Register source, const image_variable * var, 
       addr = (Address)var->getOffset();
    }
 
-   inst_printf("emitStoreRelative addr 0x%lx curr adress 0x%lx offset %ld 0x%lx size %d\n",
+   inst_printf("emitStoreRelative addr 0x%lx curr adress 0x%lx offset %lu 0x%lx size %d\n",
    		addr, gen.currAddr(), addr - gen.currAddr()+4, addr - gen.currAddr()+4, size);
 
    // load register with address from jump slot
@@ -3509,7 +3508,7 @@ void EmitterPOWER::emitStoreShared(Register source, const image_variable * var, 
 	assert (stackSize == 1);
 	scratchReg = freeReg[0];
 	
-   	inst_printf("emitStoreRelative - after new stack frame- addr 0x%lx curr adress 0x%lx offset %ld 0x%lx size %d\n",
+   	inst_printf("emitStoreRelative - after new stack frame- addr 0x%lx curr adress 0x%lx offset %lu 0x%lx size %d\n",
    		addr, gen.currAddr(), addr - gen.currAddr()+4, addr - gen.currAddr()+4, size);
    }
    
@@ -3527,7 +3526,7 @@ void EmitterPOWER::emitStoreShared(Register source, const image_variable * var, 
 		assert (stackSize == 1);
 		scratchReg1 = freeReg[0];
 	
-   		inst_printf("emitStoreRelative - after new stack frame- addr 0x%lx curr adress 0x%lx offset %ld 0x%lx size %d\n",
+   		inst_printf("emitStoreRelative - after new stack frame- addr 0x%lx curr adress 0x%lx offset %lu 0x%lx size %d\n",
    		addr, gen.currAddr(), addr - gen.currAddr()+4, addr - gen.currAddr()+4, size);
    	}
      	emitLoadRelative(scratchReg1, varOffset, scratchReg, gen.width(), gen);
