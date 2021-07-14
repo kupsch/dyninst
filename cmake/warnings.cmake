@@ -5,7 +5,7 @@
 list(APPEND REQUESTED_WARNING_FLAGS
         Wall
         Wextra
-        pedantic
+        Wpedantic
 
 	Wctor-dtor-privacy
 	Wenum-conversions
