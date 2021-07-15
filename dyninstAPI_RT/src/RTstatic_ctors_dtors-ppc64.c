@@ -29,6 +29,9 @@
  */
 
 #if defined(DYNINST_RT_STATIC_LIB)
+
+#include <stdint.h>
+
 extern void (*DYNINSTctors_begin)(void);
 extern void (*DYNINSTdtors_begin)(void);
 extern void (*DYNINSTctors_end)(void);
