@@ -44,7 +44,7 @@ void DYNINSTglobal_ctors_handler() {
     void (**ctor)(void) = &DYNINSTctors_begin;
 
     while( ctor != ( &DYNINSTctors_end )) {
-	if(*ctor && ((intptr_t)*ctor != -1)
+	if(*ctor && ((intptr_t)*ctor != -1))
 	    (*ctor)();
         ctor++;
     }
@@ -59,7 +59,7 @@ void DYNINSTglobal_dtors_handler() {
 
     // Destructors are called in the forward order that they are listed
     while( dtor != (&DYNINSTdtors_end )) {
-	if(*dtor && ((intptr_t)*dtor != -1)
+	if(*dtor && ((intptr_t)*dtor != -1))
 	    (*dtor)();
 	dtor++;
     }
