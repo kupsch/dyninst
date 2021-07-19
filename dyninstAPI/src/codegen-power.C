@@ -955,8 +955,16 @@ void insnCodeGen::generateSimple(codeGen &gen, int op,
   XFORM_RB_SET(insn, src2);
   if (op==ANDop) {
       xop=ANDxop;
+  /*
   } else if (op==ORop) {
       xop=ORxop;
+  
+  *  FIX ME: The above "else if" condition and code are commented out to remove
+  *  a duplicate branch condition as both ANDop and ORop have the same value.
+  *  This implies that the assignment in this branch is never executed.
+  *  Further tests to distinguish between the AND and OR op are needed or this
+  *  code should be eliminated
+  */
   } else {
       // only AND and OR are currently designed to use genSimpleInsn
       assert(0);
