@@ -106,7 +106,8 @@ set (SRC_LIST ${SRC_LIST}
 )
 
 if (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
-    if (${CMAKE_CXX_COMPILER_VERSION} MATCHES "^[79](\.|$)")
+    if (${CMAKE_CXX_COMPILER_VERSION} MATCHES "^[79](\.|$)"
+	    OR (PLATFORM MATCHES ppc AND ${CMAKE_CXX_COMPILER_VERSION} MATCHES "^8(\.|$)"))
 	# Disable var-tracking-assignments for arch-x86.C for gcc 7 & 9.
 	# The default max size for these compilers is too small so it fails,
 	# adjusting it using
