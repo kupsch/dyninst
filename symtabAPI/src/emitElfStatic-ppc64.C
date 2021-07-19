@@ -364,8 +364,8 @@ bool emitElfStatic::archSpecificRelocation(Symtab* targetSymtab, Symtab* srcSymt
 	  fprintf(stderr, "Unhandled relocation type %lu\n",rel.getRelType());
 	  assert(0);
 	}
-        rewrite_printf("\tbefore: relocation = 0x%x @ 0x%lx target data %lx %lx %lx %lx %lx %lx \n", 
-	relocation, relOffset,targetData[dest-2],  targetData[dest-1], targetData[dest], targetData[dest+1],  targetData[dest+2],  targetData[dest+3]);
+        rewrite_printf("\tbefore: relocation = 0x%lx @ 0x%lx target data %lx %lx %lx %lx %lx %lx \n", 
+	(unsigned long)relocation, relOffset,targetData[dest-2],  targetData[dest-1], targetData[dest], targetData[dest+1],  targetData[dest+2],  targetData[dest+3]);
 
 	if (relocation_length == 64) {
 		char *td = (targetData + dest - (dest%8));
@@ -378,7 +378,7 @@ bool emitElfStatic::archSpecificRelocation(Symtab* targetSymtab, Symtab* srcSymt
         	memcpy(td, &target, sizeof(Elf64_Word));
 	}
 
-        rewrite_printf("\tafter: relocation = 0x%x @ 0x%lx target data %lx %lx %lx %lx %lx %lx \n", relocation, relOffset,targetData[dest-2],  targetData[dest-1], targetData[dest], targetData[dest+1],  targetData[dest+2],  targetData[dest+3]);
+        rewrite_printf("\tafter: relocation = 0x%lx @ 0x%lx target data %lx %lx %lx %lx %lx %lx \n", (unsigned long)relocation, relOffset,targetData[dest-2],  targetData[dest-1], targetData[dest], targetData[dest+1],  targetData[dest+2],  targetData[dest+3]);
 
 /*
     if (branch_pred >= 0) {
@@ -534,7 +534,7 @@ case R_PPC64_NUM            :/*107 */
 		return false;
 	}
 
-        rewrite_printf("relocation for '%s': TYPE = %s(%lu) S = %lx A = %lx P = %x\n",
+        rewrite_printf("relocation for '%s': TYPE = %s(%lu) S = %lx A = %x P = %lx\n",
                 rel.name().c_str(), 
                 relocationEntry::relType2Str(rel.getRelType(), addressWidth_),
                 rel.getRelType(), symbolOffset, addend, relOffset);
@@ -870,7 +870,7 @@ Offset emitElfStatic::getGOTSize(Symtab * /*target*/, LinkMap &lmap, Offset & /*
 
     // According to the ELF abi, entries 0, 1, 2 are reserved in a GOT on x86
     if( lmap.gotSymbolTable.size() > 0 ) {
-       rewrite_printf("Determining new GOT size: %lu symtab entries, %lu reserved slots, %lu slot size\n",
+       rewrite_printf("Determining new GOT size: %lu symtab entries, %lu reserved slots, %u slot size\n",
                       lmap.gotSymbolTable.size(), GOT_RESERVED_SLOTS, slotSize);
         size = (lmap.gotSymbolTable.size()+GOT_RESERVED_SLOTS)*slotSize;
     }
@@ -945,7 +945,7 @@ void emitElfStatic::buildGOT(Symtab * /*target*/, LinkMap &lmap) {
 		   GOT_RESERVED_SLOTS, curOffset);
 
     vector<pair<Symbol *, Offset> >::iterator sym_it;
-    rewrite_printf("Copying in %d symbol table entries\n", lmap.gotSymbolTable.size());
+    rewrite_printf("Copying in %lu symbol table entries\n", lmap.gotSymbolTable.size());
 
     for(sym_it = lmap.gotSymbolTable.begin(); sym_it != lmap.gotSymbolTable.end(); ++sym_it) {
         Offset value = sym_it->first->getOffset()+sym_it->second;
