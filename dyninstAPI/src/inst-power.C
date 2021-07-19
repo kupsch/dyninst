@@ -989,7 +989,7 @@ unsigned restoreSPRegisters(codeGen &gen,
                             int save_off,
 			    int force_save)
 {
-    int cr_off, ctr_off, xer_off, spr0_off, fpscr_off;
+    int cr_off, ctr_off, xer_off, fpscr_off;
     unsigned num_restored = 0;
 
     if (gen.width() == 4) {
@@ -997,13 +997,11 @@ unsigned restoreSPRegisters(codeGen &gen,
 	ctr_off   = STK_CTR_32;
 	xer_off   = STK_XER_32;
 	fpscr_off = STK_FP_CR_32;
-	spr0_off  = STK_SPR0_32;
     } else /* gen.width() == 8 */ {
 	cr_off    = STK_CR_64;
 	ctr_off   = STK_CTR_64;
 	xer_off   = STK_XER_64;
 	fpscr_off = STK_FP_CR_64;
-	spr0_off  = STK_SPR0_64;
     }
 
     registerSlot *regCR = (*(gen.rs()))[registerSpace::cr]; 
@@ -1515,8 +1513,9 @@ Register EmitterPOWER::emitCall(opCode ocode,
 	// This is not necessarily true; more then 8 arguments could be passed,
 	// the first 8 need to be in registers while the others need to be on
 	// the stack, -- sec 3/1/97
-       bperr("Too many arguments to function call in instrumentation code:"
-	    " only 8 arguments can (currently) be passed on the POWER architecture.\n");
+       std::string msg = "Too many arguments to function call in instrumentation code:"
+	    " only 8 arguments can (currently) be passed on the POWER architecture.\n";
+	bperr("%s", msg.c_str());
 	showErrorCallback(94,msg);
 	exit(-1);
     }
