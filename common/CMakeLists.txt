@@ -111,6 +111,12 @@ if (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
     endif()
 endif()
 
+# adjust warning threshold if set in cmake/warnings.cmake
+if (maxFrameSizeOverrideSyscallInformation)
+    SET_SOURCE_FILES_PROPERTIES(src/MachSyscall.C PROPERTIES COMPILE_FLAGS
+		"-Wframe-larger-than=${maxFrameSizeOverrideSyscallInformation}")
+endif()
+
 ADD_DEFINITIONS(-DCOMMON_LIB)
 
 dyninst_library(common)

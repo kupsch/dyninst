@@ -26,6 +26,7 @@ set (SRC_LIST
   )
 SET_SOURCE_FILES_PROPERTIES(${SRC_LIST} PROPERTIES LANGUAGE CXX)
 
+set(instructionDecoderPowerExtraFlags "")
 if (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
     if (${CMAKE_CXX_COMPILER_VERSION} MATCHES "^([1-9]|1[01])(\.|$)")
 	# Disable var-tracking-assignments for InstructionDecoder-power.C.
@@ -35,9 +36,19 @@ if (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
 	#   PROPERTIES COMPILE_FLAGS "--param=max-vartrack-size=900000000"
 	#
 	# succeeds, but the object file produced is >1GB, so disable it.
-	SET_SOURCE_FILES_PROPERTIES(src/InstructionDecoder-power.C
-	    PROPERTIES COMPILE_FLAGS "-fno-var-tracking-assignments")
+	string(APPEND instructionDecoderPowerExtraFlags "-fno-var-tracking-assignments")
     endif()
+endif()
+
+# adjust warning threshold if set in cmake/warnings.cmake
+if (maxFrameSizeOverridePowerOpcodeTable)
+	string(APPEND instructionDecoderPowerExtraFlags
+		" -Wframe-larger-than=${maxFrameSizeOverridePowerOpcodeTable}")
+endif()
+
+if (NOT instructionDecoderPowerExtraFlags STREQUAL "")
+    SET_SOURCE_FILES_PROPERTIES(src/InstructionDecoder-power.C
+	    PROPERTIES COMPILE_FLAGS "${instructionDecoderPowerExtraFlags}")
 endif()
 
 ADD_DEFINITIONS(-DINSTRUCTION_LIB)
