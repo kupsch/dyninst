@@ -1,8 +1,8 @@
 # Frame sizes are larger for debug build, so adjust based on build type
 # files with functions containing large frames are adjust below
 # (the value could be made significantly maller if more files are adjuste)
-
-if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+string(TOUPPER "${CMAKE_BUILD_TYPE}" DYNINST_UPPERCASE_CMAKE_BUILD_TYPE)
+if (DYNINST_UPPERCASE_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
     set(maxFrameSize 24576)
 else()
     set(maxFrameSize 20480)
@@ -109,18 +109,24 @@ endif()
 # frames based on compiler version and build type for the following two files:
 #
 #       instructionAPI/src/InstructionDecoder-power.C
-#         (include of instructionAPI/src/InstructionDecoder-power.C)
+#         (includes instructionAPI/src/InstructionDecoder-power.C)
 #       common/src/MachSyscall.C
-#         (include of common/src/SyscallInformation.C)
+#         (includes common/src/SyscallInformation.C)
+#
 if (HAS_CPP_FLAG_Wframe_larger_than)
     if (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
-        if (CMAKE_BUILD_TYPE STREQUAL "DEBUG")
-            if (${CMAKE_CXX_COMPILER_VERSION} MATCHES "^[6](\.|$)")
-                set(maxFrameSizeOverrideSyscallInformation 81920)
-                set(maxFrameSizeOverridePowerOpcodeTable 307200)
-            elseif (${CMAKE_CXX_COMPILER_VERSION} MATCHES "^(1[01]|[89])(\.|$)")
-                set(maxFrameSizeOverridePowerOpcodeTable 76800)
-            endif()
+        if (DYNINST_UPPERCASE_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+            # if (${CMAKE_CXX_COMPILER_VERSION} MATCHES "^[6](\.|$)")
+            #     set(maxFrameSizeOverrideSyscallInformation 81920)
+            #     set(maxFrameSizeOverridePowerOpcodeTable 307200)
+            # elseif (${CMAKE_CXX_COMPILER_VERSION} MATCHES "^(1[01]|[89])(\.|$)")
+            #     set(maxFrameSizeOverridePowerOpcodeTable 76800)
+            # endif()
+            #
+            # just use worst-case value, smaller values above are valid in
+            # some environments
+            set(maxFrameSizeOverrideSyscallInformation 81920)
+            set(maxFrameSizeOverridePowerOpcodeTable 358400)
         else()
             if (${CMAKE_CXX_COMPILER_VERSION} MATCHES "^[7](\.|$)")
                 set(maxFrameSizeOverridePowerOpcodeTable 38912)
