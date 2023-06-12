@@ -56,7 +56,7 @@ if(${CMAKE_CXX_COMPILER_ID} IN_LIST _linux_compilers)
   set(DYNINST_FORCE_FRAME_POINTER -fno-omit-frame-pointer)
 
   # Dyninst relies on `assert` for correctness. Never let CMake disable it
-  set(_DEBUG -Og -g3 ${DYNINST_FORCE_FRAME_POINTER} -UNDEBUG)
+  set(_DEBUG -O0 -g3 ${DYNINST_FORCE_FRAME_POINTER} -UNDEBUG)
   set(_RELEASE -O3 -UNDEBUG)
   set(_RELWITHDEBINFO ${_RELEASE} -g3)
   set(_MINSIZEREL -Os -UNDEBUG)

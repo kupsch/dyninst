@@ -128,6 +128,9 @@ dyninst_library(
 )
 # cmake-format: on
 
+target_link_libraries(instructionAPI PRIVATE /nobackup/kupsch/intelxed/xed/install/lib/libxed-ild.so)
+target_include_directories(instructionAPI PRIVATE /nobackup/kupsch/intelxed/xed/install/include)
+
 set(_inc_dirs ${CMAKE_CURRENT_SOURCE_DIR}/src/AMDGPU/gfx90a
               ${CMAKE_CURRENT_SOURCE_DIR}/src/AMDGPU/vega)
 

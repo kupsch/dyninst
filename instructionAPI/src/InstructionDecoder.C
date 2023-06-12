@@ -33,6 +33,11 @@
 #include "Instruction.h"
 #include <array>
 #include <algorithm>
+#include <mutex>
+#include <iomanip>
+extern "C"  {
+#include "xed/xed-interface.h"
+}
 
 namespace {
 	namespace ia = Dyninst::InstructionAPI;
@@ -45,6 +50,60 @@ namespace Dyninst
 {
   namespace InstructionAPI
   {
+    static bool ValidateInstructionLen(unsigned int decodedLength, const unsigned char* start, const unsigned char *end)
+    {
+	using namespace std;
+
+	static std::once_flag xed_init;
+	std::call_once(xed_init, [](){ xed_tables_init(); });
+
+	xed_decoded_inst_t	xed_instr;
+	xed_state_t		xed_state;
+
+	xed_state_zero(&xed_state);
+	xed_state.mmode= XED_MACHINE_MODE_LONG_64;
+	xed_decoded_inst_zero_set_mode(&xed_instr, &xed_state);
+	int bufferLen = end - start;
+	if (bufferLen < 0)  {
+	    bufferLen = 0;
+	}  else if (bufferLen > 15)  {
+	    bufferLen = 16;
+	}
+	auto xed_error = xed_ild_decode(&xed_instr, start, bufferLen);
+	auto xedLength = xed_decoded_inst_get_length(&xed_instr);
+
+	if (decodedLength != xedLength || xed_error != XED_ERROR_NONE)  {
+	    if (decodedLength != xedLength)  {
+		cerr << "  WARNING:  XED length mismatch, XED length is " << xedLength << "\n";
+	    }
+	    if (xed_error != XED_ERROR_NONE)  {
+		cerr << "  ERROR: XED ILD Error:  " << xed_error_enum_t2str(xed_error) << "\n";
+	    }
+
+	    cerr << "\tValidateInstructionLen:" 
+		 << "\t  inst len:      " << decodedLength
+		 << "\t  buffer start:  " << (const void*)start
+		 << "\t  buffer len:    " << (end - start)
+		 << "\n";
+	    auto num = xedLength;
+	    if (num < decodedLength)  {
+		num = decodedLength;
+	    }
+	    if (xed_error != XED_ERROR_NONE)  {
+		num = 16;
+	    }
+	    cerr << "\t  BYTES: ";
+	    for (auto b = start; b < start + num; ++b)  {
+		cerr << " " << hex << setfill('0') << right << setw(2) << (unsigned int)*b << dec << left << setfill(' ');
+	    }
+	    cerr << "\n";
+
+	    return false;
+	}
+	
+	return true;
+    }
+
     INSTRUCTION_EXPORT InstructionDecoder::InstructionDecoder(const unsigned char* buffer_, size_t size, Architecture arch) :
         m_buf(buffer_, size)
     {
@@ -75,6 +134,9 @@ namespace Dyninst
     	auto user_ins = ::callback(user_buf);
     	m_buf.start += user_ins.size();
     	return user_ins;
+      }
+      if (ins.isLegalInsn())  {
+	  ValidateInstructionLen(ins.size(), m_buf.start - ins.size(), m_buf.end);
       }
       return ins;
     }
