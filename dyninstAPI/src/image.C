@@ -152,7 +152,6 @@ bool fileDescriptor::IsEqual(const fileDescriptor &fd) const {
         return false;
 }
 
-// only for non-files
 void* fileDescriptor::rawPtr()
 {
 #if defined(os_windows)
@@ -166,8 +165,6 @@ void* fileDescriptor::rawPtr()
 #endif
 }
 
-
-// All debug_ostream vrbles are defined in process.C (for no particular reason)
 extern unsigned enable_pd_sharedobj_debug;
 
 int codeBytesSeen = 0;
@@ -468,11 +465,6 @@ class FindMainVisitor : public ASTVisitor
     }
 };
 
-/**
- * Search for the Main Symbols in the list of symbols, Only in case
- * if the file is a shared object. If not present add them to the
- * list. Returns zero on success, nonzero otherwise.
- */
 int image::findMain()
 {
 #if defined(ppc64_linux)
@@ -914,9 +906,6 @@ int image::findMain()
     return 0; /* Success */
 }
 
-/*
- * Check if image is libdyninstRT
- */
 bool image::determineImageType()
 {
 #if defined(TIMED_PARSE)
@@ -962,10 +951,6 @@ bool image::getInferiorHeaps(vector<pair<string,Address> > &codeHeaps,
 
 bool image::addSymtabVariables()
 {
-   /* Eventually we'll have to do this on all platforms (because we'll retrieve
-    * the type information here).
-    */
-   
 #if defined(TIMED_PARSE)
    struct timeval starttime;
    gettimeofday(&starttime, NULL);
@@ -1094,8 +1079,6 @@ bool image::getModules(vector<pdmodule *> &mods)
     return ret;
 }
 
-// identify module name from symbol address (binary search)
-// based on module tags found in file format (ELF/COFF)
 void image::findModByAddr (const Symbol *lookUp, vector<Symbol *> &mods,
 			   string &modName, Address &modAddr, 
 			   const string &defName)
@@ -1136,18 +1119,6 @@ void image::findModByAddr (const Symbol *lookUp, vector<Symbol *> &mods,
 unsigned int int_addrHash(const Address& addr) {
   return (unsigned int)addr;
 }
-
-/*
- * load an executable:
- *   1.) parse symbol table and identify routines.
- *   2.) scan executable to identify inst points.
- *
- *  offset is normally zero except on CM-5 where we have two images in one
- *    file.  The offset passed to parseImage is the logical offset (0/1), not
- *    the physical point in the file.  This makes it faster to "parse" multiple
- *    copies of the same image since we don't have to stat and read to find the
- *    physical offset. 
- */
 
 image *image::parseImage(fileDescriptor &desc, 
                          BPatch_hybridMode mode, 
@@ -1235,10 +1206,6 @@ image *image::parseImage(fileDescriptor &desc,
   return ret;
 }
 
-/*
- * Remove a parsed executable from the global list. Used if the old handle
- * is no longer valid.
- */
 void image::removeImage(image *img)
 {
 
@@ -1379,12 +1346,6 @@ void image::analyzeImage() {
     cout << __FILE__ << ":" << __LINE__ <<": analyzeImage of " << name_ << " took "<<dursecs <<" msecs" << endl;
 #endif
 }
-
-// Constructor for the image object. The fileDescriptor simply
-// wraps (in the normal case) the object name and a relocation
-// address (0 for a.out file). On the following platforms, we
-// are handling a special case:
-
 
 image::image(fileDescriptor &desc, 
              bool &err, 
@@ -1791,13 +1752,6 @@ pdmodule *image::getOrCreateModule(Module *mod) {
     return pdmod;
 }
 
-
-/*********************************************************************/
-/**** Function lookup (by name or address) routines               ****/
-/****                                                             ****/
-/**** Overlapping region objects MUST NOT use these routines(+)   ****/
-/*********************************************************************/
-
 int
 image::findFuncs(const Address offset, set<Function *> & funcs) {
     analyzeIfNeeded();
@@ -1852,9 +1806,6 @@ image::findBlocksByAddr(const Address addr, set<ParseAPI::Block *> & blocks )
     return 0;
 }
 
-// Return the vector of functions associated with a pretty (demangled) name
-// Very well might be more than one!
-
 const std::vector<parse_func *> *image::findFuncVectorByPretty(const std::string &name) {
     //Have to change here
     std::vector<parse_func *>* res = new std::vector<parse_func *>;
@@ -1876,9 +1827,6 @@ const std::vector<parse_func *> *image::findFuncVectorByPretty(const std::string
     	return NULL;
     }
 }
-
-// Return the vector of functions associated with a mangled name
-// Very well might be more than one! -- multiple static functions in different .o files
 
 const std::vector <parse_func *> *image::findFuncVectorByMangled(const std::string &name)
 {
@@ -1993,7 +1941,6 @@ bool pdmodule::getFunctions(std::vector<parse_func *> &funcs)  {
     return (funcs.size() > curFuncSize);
 } /* end getFunctions() */
 
-/* Instrumentable-only, by the last version's source. */
 bool pdmodule::getVariables(std::vector<image_variable *> &vars)  {
     std::vector<image_variable *> allVars = imExec()->getAllVariables();
     unsigned curVarSize = vars.size();
