@@ -661,6 +661,18 @@ bool Object::loaded_elf(Offset &txtaddr, Offset &dataddr,
             }
         }
 
+        // Separate debug files are copies of the original ELF file with the
+        // bytes contained in most non-debugging sections removed.  Although
+        // the data bytes of the section are removed, the section header
+        // remains with the only change being the section type is changed to
+        // NOBITS.  The only sections that legitimately have a type of NOBITS
+        // are .bss and .tbss.  So unless the section is .bss (.tbss is not
+        // processed by dyninst) treat a NOBITS section like it does not exist
+        // by skipping any section-specific processing.
+        if (scn.sh_type() == SHT_NOBITS && strcmp(name, BSS_NAME) != 0)  {
+            continue;
+        }
+
         // section-specific processing
         if (P_strcmp(name, EDITED_TEXT_NAME) == 0) {
             // EEL rewritten executable
