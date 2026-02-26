@@ -43,11 +43,31 @@ set(_private_headers
     src/addressSpace.h
     src/AmdgpuKernelDescriptor.h
     src/AmdgpuPointHandler.h
-    src/AmdgpuPrologue.h
-    src/AmdgpuEpilogue.h
     ${PROJECT_SOURCE_DIR}/external/amdgpu/AMDHSAKernelDescriptor.h
     ${PROJECT_SOURCE_DIR}/external/amdgpu/AMDGPUEFlags.h
     src/ast.h
+    src/ASTs/AmdgpuEpilogue.h
+    src/ASTs/AmdgpuPrologue.h
+    src/ASTs/ast_helpers.h
+    src/ASTs/addressAST.h
+    src/ASTs/memoryAccessAST.h
+    src/ASTs/nullAST.h
+    src/ASTs/stackAST.h
+    src/ASTs/operandAST.h
+    src/ASTs/operatorAST.h
+    src/ASTs/scrambleRegistersAST.h
+    src/ASTs/sequenceAST.h
+    src/ASTs/snippetAST.h
+    src/ASTs/stackInsertionAST.h
+    src/ASTs/genericStackAST.h
+    src/ASTs/stackRemovalAST.h
+    src/ASTs/atomicOperationAST.h
+    src/ASTs/codeGenAST.h
+    src/ASTs/functionCallAST.h
+    src/ASTs/jumpTargetAST.h
+    src/ASTs/threadAST.h
+    src/ASTs/variableAST.h
+    src/ASTs/OperandType.h
     src/trampolines/baseTramp.h
     src/trampolines/baseTramp-aarch64.h
     src/trampolines/baseTramp-amdgpu.h
@@ -97,7 +117,6 @@ set(_private_headers
     src/mapped_object.h
     src/nt_signal_emul.h
     src/opcode.h
-    src/OperandType.h
     src/os.h
     src/parRegion.h
     src/parse-cfg.h
@@ -119,7 +138,25 @@ set(_private_headers
 
 set(_sources
     src/addressSpace.C
-    src/ast.C
+    src/ASTs/actualAddressAST.C
+    src/ASTs/memoryAccessAST.C
+    src/ASTs/nullAST.C
+    src/ASTs/operandAST.C
+    src/ASTs/operatorAST.C
+    src/ASTs/originalAddressAST.C
+    src/ASTs/scrambleRegistersAST.C
+    src/ASTs/sequenceAST.C
+    src/ASTs/snippetAST.C
+    src/ASTs/stackAST.C
+    src/ASTs/stackInsertionAST.C
+    src/ASTs/genericStackAST.C
+    src/ASTs/stackRemovalAST.C
+    src/ASTs/atomicOperationAST.C
+    src/ASTs/codeGenAST.C
+    src/ASTs/functionCallAST.C
+    src/ASTs/jumpTargetAST.C
+    src/ASTs/threadAST.C
+    src/ASTs/variableAST.C
     src/binaryEdit.C
     src/block.C
     src/codeRange.C
@@ -278,8 +315,8 @@ elseif(DYNINST_CODEGEN_ARCH_AMDGPU_GFX908)
     src/Relocation/Widgets/PCWidget-amdgpu.C
     src/AmdgpuKernelDescriptor.C
     src/AmdgpuPointHandler.C
-    src/AmdgpuPrologue.C
-    src/AmdgpuEpilogue.C
+    src/ASTs/AmdgpuPrologue.C
+    src/ASTs/AmdgpuEpilogue.C
     src/amdgpu-gfx908-details.C)
 endif()
 
@@ -334,6 +371,10 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   endif()
 endif()
 
+list(APPEND _inc_dirs "${CMAKE_CURRENT_SOURCE_DIR}/src/ASTs")
+list(APPEND _inc_dirs "${CMAKE_CURRENT_SOURCE_DIR}/src/registerSpace")
+list(APPEND _inc_dirs "${CMAKE_CURRENT_SOURCE_DIR}/src/trampolines")
+
 foreach(t ${dyninstAPI_TARGETS})
   if(DYNINST_OS_Windows)
     target_link_libraries(${t} PRIVATE dbghelp WS2_32 imagehlp)
@@ -345,9 +386,7 @@ foreach(t ${dyninstAPI_TARGETS})
       ${t} PRIVATE "DYNINST_COMPILER_SEARCH_DIRS=${DYNINST_COMPILER_SEARCH_DIRS}")
   endif()
 
-  target_include_directories(
-    ${t}
-    PUBLIC
-      "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/trampolines;${CMAKE_CURRENT_SOURCE_DIR}/src/registerSpace>"
-    )
+  target_include_directories(${t} PUBLIC "$<BUILD_INTERFACE:${_inc_dirs}>")
 endforeach()
+
+unset(_inc_dirs)
