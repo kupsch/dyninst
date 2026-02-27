@@ -39,7 +39,6 @@
 #include "parse-cfg.h"
 #include "instPoint.h"
 #include "image.h"
-#include "parRegion.h"
 #include "debug.h"
 
 #include "debug.h"

@@ -167,12 +167,6 @@ Address parse_func::getEndOffset() {
     }
 }
 
-
-const std::vector<image_parRegion *> &parse_func::parRegions() {
-  if (!parsed()) image_->analyzeIfNeeded();
-  return parRegionsList;
-}
-
 bool parse_func::isPLTFunction() {
     return obj()->cs()->linkage().find(addr()) !=
            obj()->cs()->linkage().end();
@@ -389,15 +383,6 @@ bool parse_func::isLeafFunc() {
         image_->analyzeIfNeeded();
 
     return callEdges().empty();
-}
-
-void parse_func::addParRegion(Address begin, Address end, parRegType t)
-{
-    image_parRegion * iPar = new image_parRegion(begin, this);
-    iPar->setRegionType(t);
-    iPar->setParentFunc(this); // when not outlined, parent func will be same as regular
-    iPar->setLastInsn(end);
-    parRegionsList.push_back(iPar);
 }
 
 void parse_block::getInsns(Insns &insns, Address base) {

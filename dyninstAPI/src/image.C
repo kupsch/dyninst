@@ -36,7 +36,6 @@
 #include <fstream>
 
 #include "image.h"
-#include "parRegion.h"
 #include "inst.h"
 #include "debug.h"
 #include "function.h"
@@ -1517,11 +1516,6 @@ image::~image()
     everyUniqueVariable.clear();
     createdVariables.clear();
     exportedVariables.clear();
-
-   
-    for (i = 0; i < parallelRegions.size(); i++)
-      delete parallelRegions[i];
-    parallelRegions.clear();
 
     // Finally, remove us from the image list.
     allImages.erase(

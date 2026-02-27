@@ -26,7 +26,6 @@ set(_public_headers
     h/BPatch_memoryAccess_NP.h
     h/BPatch_module.h
     h/BPatch_object.h
-    h/BPatch_parRegion.h
     h/BPatch_point.h
     h/BPatch_process.h
     h/BPatch_Set.h
@@ -118,7 +117,6 @@ set(_private_headers
     src/nt_signal_emul.h
     src/opcode.h
     src/os.h
-    src/parRegion.h
     src/parse-cfg.h
     src/Parsing.h
     src/patch.h
@@ -177,7 +175,6 @@ set(_sources
     src/instPoint.C
     src/mapped_module.C
     src/mapped_object.C
-    src/parRegion.C
     src/parse-cfg.C
     src/pcEventHandler.C
     src/pcEventMuxer.C
@@ -200,7 +197,6 @@ set(_sources
     src/BPatch_memoryAccessAdapter.C
     src/BPatch_module.C
     src/BPatch_object.C
-    src/BPatch_parRegion.C
     src/BPatch_point.C
     src/BPatch_process.C
     src/BPatch_snippet.C

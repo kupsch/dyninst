@@ -236,8 +236,6 @@ class func_instance : public patchTarget, public Dyninst::PatchAPI::PatchFunctio
   ////////////////////////////////////////////////
 
 
-  const std::vector< int_parRegion* > &parRegions();
-
   unsigned getNumDynamicCalls();
 
   // Fill the <callers> vector with pointers to the statically-determined
@@ -375,9 +373,6 @@ class func_instance : public patchTarget, public Dyninst::PatchAPI::PatchFunctio
                                 set to -1, or to the address of the fault
                                 that last caused the handler to be invoked. */
   Address handlerFaultAddrAddr_;
-
-  //////////////////////////  Parallel Regions
-  std::vector<int_parRegion*> parallelRegions_; /* pointer to the parallel regions */
 
   void addblock_instance(block_instance *instance);
 

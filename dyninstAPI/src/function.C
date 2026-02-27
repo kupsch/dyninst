@@ -153,8 +153,6 @@ func_instance::~func_instance() {
    // We _do_ delete context instPoints, though
    // Except that should get taken care of normally since the
    // structures are static. 
-   for (unsigned i = 0; i < parallelRegions_.size(); i++)
-      delete parallelRegions_[i];
    if (wrapperSym_ != NULL) {
       delete wrapperSym_;
    }
@@ -510,21 +508,6 @@ std::string func_instance::get_name() const
 
 Offset func_instance::addrToOffset(const Address a) const {
    return a - (addr() - ifunc()->getOffset());
-}
-
-const std::vector< int_parRegion* > &func_instance::parRegions()
-{
-  if (parallelRegions_.size() > 0)
-    return parallelRegions_;
-
-  for (unsigned int i = 0; i < ifunc()->parRegions().size(); i++)
-    {
-      image_parRegion * imPR = ifunc()->parRegions()[i];
-      //int_parRegion * iPR = new int_parRegion(imPR, baseAddr, this);
-      int_parRegion * iPR = new int_parRegion(imPR, addr_, this);
-      parallelRegions_.push_back(iPR);
-    }
-  return parallelRegions_;
 }
 
 bool func_instance::consistency() const {

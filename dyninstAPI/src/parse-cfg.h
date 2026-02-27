@@ -41,7 +41,6 @@
 #include <vector>
 #include <string>
 #include "codeRange.h"
-#include "parRegion.h"
 #include <unordered_map>
 #include "symtabAPI/h/Symbol.h"
 #include "bitArray.h"
@@ -277,8 +276,6 @@ class parse_func : public ParseAPI::Function
    // Initiate parsing on this function
    bool parse();
  
-   const std::vector<image_parRegion*> &parRegions();
-
    bool isInstrumentable();
    bool hasUnresolvedCF();
 
@@ -355,11 +352,6 @@ class parse_func : public ParseAPI::Function
    enum regUseState { unknown, used, unused };
    parse_func_registers * usedRegisters{nullptr};
    regUseState containsFPRWrites_{unknown};   // floating point registers
-
-   //  OpenMP (and other parallel language) support
-   std::vector<image_parRegion*> parRegionsList; /* vector of all parallel regions within function */
-    void addParRegion(Address begin, Address end, parRegType t);
-   // End OpenMP support
 
    bool hasWeirdInsns_{false};    // true if we stopped the parse at a
 								  // weird instruction (e.g., arpl)
