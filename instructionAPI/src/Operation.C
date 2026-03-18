@@ -28,6 +28,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#include "BinaryFunction.h"
+#include "Immediate.h"
 #include "Operation_impl.h"
 #include "Register.h"
 #include "common/src/arch-x86.h"
@@ -42,8 +44,6 @@
 #include <mutex>
 
 using namespace NS_x86;
-#include "BinaryFunction.h"
-#include "Immediate.h"
 
 namespace Dyninst { namespace InstructionAPI {
 
@@ -59,7 +59,7 @@ namespace Dyninst { namespace InstructionAPI {
       : operationID(id), archDecodedFrom(arch), mnemonic{std::move(m)} {
     switch(archDecodedFrom) {
       case Arch_x86:
-      case Arch_ppc32: addrWidth = u32; break;
+      addrWidth = u32; break;
       default: addrWidth = u64; break;
     }
   }
@@ -99,7 +99,7 @@ namespace Dyninst { namespace InstructionAPI {
     // Defaults for no size prefix
     switch(archDecodedFrom) {
       case Arch_x86:
-      case Arch_ppc32: addrWidth = u32; break;
+      addrWidth = u32; break;
       default: addrWidth = u64; break;
     }
     if(p && p->getCount()) {
@@ -159,13 +159,13 @@ namespace Dyninst { namespace InstructionAPI {
 
     SetUpNonOperandData();
 
-    for(registerSet::const_iterator r = otherRead.begin(); r != otherRead.end(); ++r) {
-      if(*candidate == *(*r)) {
+    for(RegisterAST::Ptr const& r : otherRead) {
+      if(*candidate == *r) {
         return true;
       }
     }
-    for(VCSet::const_iterator e = otherEffAddrsRead.begin(); e != otherEffAddrsRead.end(); ++e) {
-      if(*candidate == *(*e)) {
+    for(Expression::Ptr const& e : otherEffAddrsRead) {
+      if(*candidate == *e) {
         return true;
       }
     }
@@ -186,14 +186,13 @@ namespace Dyninst { namespace InstructionAPI {
 
     SetUpNonOperandData();
 
-    for(registerSet::const_iterator r = otherWritten.begin(); r != otherWritten.end(); ++r) {
-      if(*candidate == *(*r)) {
+    for(RegisterAST::Ptr const& r : otherWritten) {
+      if(*candidate == *r) {
         return true;
       }
     }
-    for(VCSet::const_iterator e = otherEffAddrsWritten.begin(); e != otherEffAddrsWritten.end();
-        ++e) {
-      if(*candidate == *(*e)) {
+    for(Expression::Ptr const& e : otherEffAddrsWritten) {
+      if(*candidate == *e) {
         return true;
       }
     }
