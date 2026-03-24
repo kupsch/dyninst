@@ -150,7 +150,7 @@ namespace Dyninst { namespace InstructionAPI {
     bool isLegalInsn() const { return isValid(); }
 
     Architecture getArch() const;
-
+    
     InsnCategory getCategory() const;
     bool isCall() const { return getCategory() == c_CallInsn; }
     bool isReturn() const { return getCategory() == c_ReturnInsn; }
@@ -163,11 +163,10 @@ namespace Dyninst { namespace InstructionAPI {
     bool isVector() const { return getCategory() == c_VectorInsn; }
     bool isGPUKernelExit() const { return getCategory() == c_GPUKernelExitInsn; }
     bool isSoftwareException() const { return isGPUKernelExit() || getCategory() == c_SoftwareExceptionInsn; }
+    bool isConditional() const { return checked_category(c_ConditionalInsn); }
 
-    bool isMultiInsnCall() const { return isCall() && getOperation().isMultiInsnCall; }
-    bool isMultiInsnBranch() const { return isBranch() && getOperation().isMultiInsnBranch; }
-    bool isNonABICall() const { return isCall() && getOperation().isNonABICall; }
-    bool isNonABIReturn() const { return isReturn() && getOperation().isNonABIReturn; }
+    void forceReturn() const;
+    void forceCall() const;
 
     typedef std::vector<CFT>::const_iterator cftConstIter;
     cftConstIter cft_begin() const { return m_Successors.begin(); }

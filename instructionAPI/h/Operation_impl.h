@@ -82,10 +82,6 @@ namespace Dyninst { namespace InstructionAPI {
     bool operator==(Operation const&) const;
 
     bool isVectorInsn{};
-    bool isMultiInsnCall{};
-    bool isMultiInsnBranch{};
-    bool isNonABICall{};
-    bool isNonABIReturn{};
 
   private:
     std::once_flag data_initialized;
