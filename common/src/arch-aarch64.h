@@ -39,7 +39,6 @@
 #include "registers/aarch64_regs.h"
 #include <assert.h>
 #include <vector>
-#include "arch.h"
 class AddressSpace;
 
 namespace NS_aarch64 {
@@ -47,15 +46,6 @@ namespace NS_aarch64 {
  * Define arch64 instruction information.
  *
  */
-
-//#define ATOMIC_MASK    (0x3f400000)
-//#define ATOMIC_LD (0x08400000)
-//#define ATOMIC_ST (0x08000000)
-//
-//#define UNCOND_BR_IMM_MASK  (0x7c000000)
-//#define UNCOND_BR_IMM       (0x14000000)
-//#define UNCOND_BR_REG_MASK  (0xfe000000)
-//#define UNCOND_BR_REG       (0xd6000000)
 
 #define BREAK_POINT_INSN 0xd4200000
 
@@ -175,9 +165,6 @@ typedef unsigned codeBufIndex_t;
 
 #define maxFPR 32           /* Save FPRs 0-13 */
 
-// Helps to mitigate host/target endian mismatches
-unsigned int swapBytesIfNeeded(unsigned int i);
-
 class DYNINST_EXPORT instruction {
 	private:
     instructUnion insn_;
@@ -222,7 +209,6 @@ class DYNINST_EXPORT instruction {
 
     // To solve host/target endian mismatches
     static int signExtend(unsigned int i, unsigned int pos);
-    static instructUnion &swapBytes(instructUnion &i);
 
     // We need instruction::size() all _over_ the place.
     static unsigned size() { return sizeof(instructUnion); }

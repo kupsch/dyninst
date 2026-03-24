@@ -442,9 +442,6 @@ typedef union {
 typedef instructUnion codeBuf_t;
 typedef unsigned codeBufIndex_t;
 
-// Helps to mitigate host/target endian mismatches
-// unsigned int swapBytesIfNeeded(unsigned int i);
-
 class DYNINST_EXPORT instruction {
 private:
   instructUnion insn_;
@@ -484,7 +481,6 @@ public:
   //
   // // To solve host/target endian mismatches
   // static int signExtend(unsigned int i, unsigned int pos);
-  // static instructUnion &swapBytes(instructUnion &i);
   //
   // // We need instruction::size() all _over_ the place.
   static unsigned size() { return sizeof(instructUnion); }

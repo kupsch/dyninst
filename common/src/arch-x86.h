@@ -44,7 +44,6 @@
 #include "registers/MachRegister.h"
 #include "common/src/ia32_locations.h"
 #include "dyn_register.h"
-#include "arch.h"
 
 namespace NS_x86 {
 
@@ -218,9 +217,6 @@ enum AMD64_REG_NUMBERS {
     REGNUM_IGNORED
 }
 ;
-
-#define READ_OP 0
-#define WRITE_OP 1
 
 /* operand sizes */
 #define byteSzB (1)    /* size of a byte operand */
@@ -1001,7 +997,6 @@ DYNINST_EXPORT Dyninst::Address get_target(const unsigned char *instr, unsigned 
 #if defined(DYNINST_CODEGEN_ARCH_X86_64)
 // size of instruction seqeunce to get anywhere in address space
 // without touching any registers
-//#define JUMP_ABS64_SZ (17)
 #define JUMP_ABS64_SZ (14)
 // Jump is push/return; call is push/push/return, so subtract a return
 #define CALL_ABS64_SZ (JUMP_ABS64_SZ+JUMP_ABS64_SZ-1)
@@ -1026,8 +1021,6 @@ DYNINST_EXPORT Dyninst::Address get_target(const unsigned char *instr, unsigned 
 #define EXTENDED_0x81_XOR 6
 #define EXTENDED_0x81_CMP 7
 #define EXTENDED_0x83_AND 4
-
-unsigned int swapBytesIfNeeded(unsigned int i);
 
 class instruction {
  public:

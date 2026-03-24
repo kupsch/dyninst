@@ -38,11 +38,13 @@
 #include "registers/ppc32_regs.h"
 #include "registers/ppc64_regs.h"
 #include "dyntypes.h"
-#include "arch.h"
 #include <vector>
 class AddressSpace;
 
 namespace NS_power {
+
+#define MAX_IMM16 (32767)
+#define MIN_IMM16 (-32768)
 
 /*
  * Define power instruction information.
@@ -347,18 +349,6 @@ namespace NS_power {
 #define AFORM_RC_SET(x, y)  ((x).setBits( 0,  1, (y)))
 
 typedef union {
-//  struct iform  iform;  // branch;
-//  struct bform  bform;  // cbranch;
-//  struct dform  dform;
-//  struct dsform dsform;
-//  struct xform  xform;
-//  struct xoform xoform;
-//  struct xlform xlform;
-//  struct xfxform xfxform;
-//  struct xflform xflform;
-//  struct mform  mform;
-//  struct mdform  mdform;
-//  struct aform  aform;
     unsigned char byte[4];
     unsigned int  raw;
 } instructUnion;
@@ -768,10 +758,6 @@ const int maxGPR=32;           /* More space than is needed */
 
 #define MAX_IMM		0x1<<15		/* 15 plus sign == 16 bits */
 
-// Delcared some other functions in inst-power.C
-// bool isCallInsn(const instruction);
-// bool isReturnInsn(const image *, Address, bool&);
-
 // Define bounds for immediate offsets.
 // Use strange definitions to avoid compiler warnings.
 
@@ -783,13 +769,6 @@ const int maxGPR=32;           /* More space than is needed */
 
 #define MAX_IMM48      ((long)(-1 >> 17))   // To avoid warnings on 32-bit
 #define MIN_IMM48      ((long)(~MAX_IMM48)) // compilers.
-
-// Helps to mitigate host/target endian mismatches
-DYNINST_EXPORT unsigned int swapBytesIfNeeded(unsigned int i);
-
-///////////////////////////////////////////////////////
-// Bum bum bum.....
-///////////////////////////////////////////////////////
 
 class DYNINST_EXPORT instruction {
  private:
@@ -831,7 +810,6 @@ class DYNINST_EXPORT instruction {
 
     // To solve host/target endian mismatches
     static int signExtend(unsigned int i, unsigned int pos);
-    static instructUnion &swapBytes(instructUnion &i);
 
     // We need instruction::size() all _over_ the place.
     static unsigned size() { return sizeof(instructUnion); } 

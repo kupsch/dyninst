@@ -157,11 +157,6 @@ using namespace Dyninst;
 
 namespace NS_x86 {
 
-unsigned int swapBytesIfNeeded(unsigned int i)
-{
-    return i;
-}
-
 // groups
 enum {
   Grp1a=0, Grp1b, Grp1c, Grp1d, Grp1A, Grp2, Grp3a, Grp3b, Grp4, Grp5, Grp6, Grp7,
@@ -2237,8 +2232,6 @@ list_of(x86::of)(x86::sf)(x86::zf)(x86::af)(x86::pf)(x86::cf)(x86::tf)(x86::if_)
   flagTable_[e_pcmpistrm] = flagInfo(vector<Dyninst::MachRegister>(), standardFlags);
   flagTable_[e_popcnt] = flagInfo(list_of(x86::of)(x86::sf)(x86::zf)(x86::af)(x86::cf)(x86::pf), vector<Dyninst::MachRegister>());
   flagTable_[e_ptest] = flagInfo(vector<Dyninst::MachRegister>(), standardFlags);
-
-//  flagTable_[e_ptest] = flagInfo(list_of(x86::of)(x86::sf)(x86::zf)(x86::af)(x86::cf)(x86::pf), vector<Dyninst::MachRegister>());
 }
 
 bool ia32_entry::flagsUsed(std::set<MachRegister>& flagsRead, std::set<MachRegister>& flagsWritten, ia32_locations* locs)
@@ -12076,47 +12069,6 @@ bool isStackFramePrecheck_msvs( const unsigned char *buffer )
    return (gap_initial_bytes[*buffer] != 0);
 }  
 
-/*
-   bool isStackFramePreamble( instruction& insn1 )
-   {
-   instruction insn2, insn3;
-   insn2.setInstruction( insn1.ptr() + insn1.size() );
-   insn3.setInstruction( insn2.ptr() + insn2.size() );
-
-   const unsigned char* p = insn1.op_ptr();
-   const unsigned char* q = insn2.op_ptr();
-   const unsigned char* r = insn3.op_ptr();
-
-   unsigned Mod1_1 =  ( q[ 1 ] >> 3 ) & 0x07;
-   unsigned Mod1_2 =  q[ 1 ] & 0x07;
-   unsigned Mod2_1 =  ( r[ 1 ] >> 3 ) & 0x07;
-   unsigned Mod2_2 =  r[ 1 ] & 0x07;
-
-   if( insn1.size() != 1 )
-   {
-   return false;  //shouldn't need this, but you never know
-   }
-
-   if( p[ 0 ] == PUSHEBP  )
-   {
-// Looking for mov %esp -> %ebp in one of the two
-// following instructions.  There are two ways to encode
-// mov %esp -> %ebp: as '0x8b 0xec' or as '0x89 0xe5'.
-if( insn2.isMoveRegMemToRegMem() &&
-((Mod1_1 == 0x05 && Mod1_2 == 0x04) ||
-(Mod1_1 == 0x04 && Mod1_2 == 0x05)))
-return true;
-
-if( insn3.isMoveRegMemToRegMem() &&
-((Mod2_1 == 0x05 && Mod2_2 == 0x04) ||
-(Mod2_1 == 0x04 && Mod2_2 == 0x05)))
-return true;
-}
-
-return false;
-}
-*/
-
 instruction *instruction::copy() const {
    // Or should we copy? I guess it depends on who allocated
    // the memory...
@@ -12216,11 +12168,6 @@ unsigned instruction::maxJumpSize(unsigned /*addr_width*/)
    return JUMP_SZ;
 }
 #endif
-
-
-#define SIB_SET_REG(x, y) ((x) |= ((y) & 7))
-#define SIB_SET_INDEX(x, y) ((x) |= (((y) & 7) << 3))
-#define SIB_SET_SS(x, y) ((x) | (((y) & 3) << 6))
 
 
 } // namespace arch_x86

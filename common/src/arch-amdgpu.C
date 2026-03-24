@@ -406,19 +406,9 @@ DYNINST_EXPORT extern const Register ignored{};
 
 } // namespace RegisterConstants
 
-// unsigned int swapBytesIfNeeded(unsigned int [> i <]) {
-//   assert(!"Not implemented for AMDGPU");
-//   return 0;
-// }
-//
 // int instruction::signExtend(unsigned int [> i */, unsigned int /* pos <]) {
 //   assert(!"Not implemented for AMDGPU");
 //   return 0;
-// }
-//
-// instructUnion &instruction::swapBytes(instructUnion &i) {
-//   assert(!"Not implemented for AMDGPU");
-//   return i;
 // }
 //
 // instruction *instruction::copy() const {

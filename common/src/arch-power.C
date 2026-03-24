@@ -33,16 +33,6 @@
 #include <cassert>
 using namespace NS_power;
 
-unsigned int NS_power::swapBytesIfNeeded(unsigned int i)
-{
-    static int one = 0x1;
-
-    if ( *((unsigned char *)&one) )
-        return instruction::swapBytes( *((instructUnion *)&i) ).raw;
-
-    return i;
-}
-
 int instruction::signExtend(unsigned int i, unsigned int pos)
 {
     int ret;
@@ -53,19 +43,6 @@ int instruction::signExtend(unsigned int i, unsigned int pos)
     }
 
      return ret;
-}
-
-instructUnion &instruction::swapBytes(instructUnion &i)
-{
-    unsigned char tmp = i.byte[0];
-    i.byte[0] = i.byte[3];
-    i.byte[3] = tmp;
-
-    tmp = i.byte[1];
-    i.byte[1] = i.byte[2];
-    i.byte[2] = tmp;
-
-    return i;
 }
 
 instruction *instruction::copy() const {
