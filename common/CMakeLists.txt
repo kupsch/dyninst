@@ -61,13 +61,18 @@ set(_private_headers
     src/arch-aarch64.h
     src/arch-power.h
     src/arch-x86.h
+    src/arch-regs-x86.h
     src/debug_common.h
     src/dthread.h
     src/dyn_register.h
     src/freebsdHeaders.h
     src/freebsdKludges.h
     src/headers.h
+    src/ia32_entry.h
     src/ia32_locations.h
+    src/ia32_memacc.h
+    src/ia32_prefixes.h
+    src/instruction-x86.h
     src/IntervalTree.h
     src/linuxHeaders.h
     src/linuxKludges.h
@@ -93,6 +98,11 @@ set(_sources
     src/Timer.C
     src/lprintf.C
     src/dyninst_filesystem.C
+    src/encoding-x86.h
+    src/ia32_entry.C
+    src/ia32_memacc.C
+    src/ia32_prefixes.C
+    src/instruction-x86.C
     src/stats.C
     src/Annotatable.C
     src/MappedFile.C

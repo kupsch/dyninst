@@ -45,6 +45,12 @@
 using namespace std;
 using namespace NS_x86;
 
+/* operand types */
+/* signed char required for correct immediate value interpretation */
+typedef signed char byte_t;   /* a byte operand */
+typedef short word_t;  /* a word (16-bit) operand */
+typedef int dword_t;   /* a double word (32-bit) operand */
+
 static bool getVectorizationInfo(ia32_entry* e) {
   for(int i = 0; i < 3; i++) {
     switch(e->operands[i].admet) {
@@ -70,6 +76,24 @@ static bool getVectorizationInfo(ia32_entry* e) {
     }
   }
   return false;
+}
+
+//Determine appropriate scale, index, and base given SIB byte.
+static void decode_SIB(unsigned sib, unsigned& scale, Dyninst::Register& index_reg, Dyninst::Register& base_reg){
+   scale = sib >> 6;
+
+   //scale = 2^scale
+   if(scale == 0)
+      scale = 1;
+   else if(scale == 1)
+      scale = 2;
+   else if(scale == 2)
+      scale = 4;
+   else if(scale == 3)
+      scale = 8;
+
+   index_reg = (sib >> 3) & 0x07;
+   base_reg = sib & 0x07;
 }
 
 namespace Dyninst { namespace InstructionAPI {
