@@ -42,11 +42,11 @@ namespace NS_x86 {
      get_instruction: get the instruction that starts at instr.
      return the size of the instruction and set instType to a type descriptor
   */
-  unsigned get_instruction(const unsigned char *instr, unsigned &instType,
+  DYNINST_EXPORT unsigned get_instruction(const unsigned char *instr, unsigned &instType,
                            const unsigned char **op_ptr, bool mode_64);
 
   /* get the target of a jump or call */
-  Dyninst::Address get_target(const unsigned char *instr, unsigned type, unsigned size,
+  DYNINST_EXPORT Dyninst::Address get_target(const unsigned char *instr, unsigned type, unsigned size,
                               Dyninst::Address addr);
 
   class instruction {

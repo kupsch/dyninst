@@ -61,7 +61,7 @@ namespace NS_x86 {
   };
 
   // An instruction table entry
-  struct ia32_entry {
+  struct DYNINST_EXPORT ia32_entry {
     const char *name(ia32_locations *locs = NULL);
     entryID getID(ia32_locations *locs = NULL) const;
     entryID id;
