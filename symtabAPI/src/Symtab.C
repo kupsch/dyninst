@@ -1859,16 +1859,6 @@ DYNINST_EXPORT bool Symtab::updateRegion(const char* name, void *buffer, unsigne
    return true;
 }
 
-DYNINST_EXPORT bool Symtab::updateCode(void *buffer, unsigned size)
-{
-  return updateRegion(".text", buffer, size);
-}
-
-DYNINST_EXPORT bool Symtab::updateData(void *buffer, unsigned size)
-{
-  return updateRegion(".data", buffer, size);
-}
-
 DYNINST_EXPORT Offset Symtab::getFreeOffset(unsigned size) 
 {
    // Look through sections until we find a gap with
