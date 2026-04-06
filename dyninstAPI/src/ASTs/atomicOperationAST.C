@@ -1,6 +1,8 @@
 #include "atomicOperationAST.h"
 #include "codegen.h"
+#include "debug.h"
 #include "operandAST.h"
+#include "registerSpace.h"
 
 #include <iomanip>
 #include <sstream>
@@ -40,7 +42,7 @@ bool atomicOperationAST::generateCode_phase2(codeGen &gen, bool noCost, Address 
 
   bool ret = true;
 
-  Register src0 = Dyninst::Null_Register;
+  Dyninst::Register src0 = Dyninst::Null_Register;
   if(!constant->generateCode_phase2(gen, noCost, retAddr, src0)) {
     fprintf(stderr, "WARNING: failed in generateCode internals!\n");
     ret = false;
@@ -59,22 +61,41 @@ bool atomicOperationAST::generateCode_phase2(codeGen &gen, bool noCost, Address 
   EmitterAmdgpuGfx908 *emitter = dynamic_cast<EmitterAmdgpuGfx908 *>(gen.emitter());
   assert(emitter);
 
-  // TODO : Remove all hardcoded registers.
-  emitter->emitMoveRegToReg(94, 88, gen);
-  emitter->emitMoveRegToReg(95, 89, gen);
-  emitter->emitAddConstantToRegPair(88, (Address)offset->getOValue(), gen);
+  registerSpace *regSpace = gen.rs();
 
-  // Now we have s[88:89] with address of the variable. Emit appropriate atomic instruction.
+  Dyninst::Register addrRegPair =
+      regSpace->allocateGprBlock(RegKind::SCALAR, /* numRegs */2, NS_amdgpu::PAIR_ALIGNMENT);
+
+  assert(addrRegPair != Null_Register &&
+         "atomicOperationAST : Failed to allocate register pair");
+
+  const uint32_t addrRegId = addrRegPair.getId();
+  ast_printf("atomicOperationAST allocated scalar register block s[%u:%u]\n", addrRegId,
+             addrRegId + 1);
+
+  // TODO this needs to pick up the register from placeholderReg
+  Dyninst::Register baseRegPair = Dyninst::Register(OperandRegId(94), RegKind::SCALAR, BlockSize(2));
+
+  // TODO: make movs work with blocks.
+  std::vector<Dyninst::Register> addrRegs = addrRegPair.getIndividualRegisters();
+  std::vector<Dyninst::Register> baseRegs = baseRegPair.getIndividualRegisters();
+
+  emitter->emitMoveRegToReg(baseRegs[0], addrRegs[0], gen);
+  emitter->emitMoveRegToReg(baseRegs[1], addrRegs[1], gen);
+  emitter->emitAddConstantToRegPair(addrRegPair, (Address)offset->getOValue(), gen);
+
   switch(opcode) {
     case plusOp:
-      emitter->emitAtomicAdd(88, src0, gen);
+      emitter->emitAtomicAdd(addrRegPair, src0, gen);
       break;
     case minusOp:
-      emitter->emitAtomicSub(88, src0, gen);
+      emitter->emitAtomicSub(addrRegPair, src0, gen);
       break;
     default:
       assert(!"atomic operation for this opcode is not implemented");
   }
+
+  regSpace->freeGprBlock(addrRegPair);
 
   return ret;
 }

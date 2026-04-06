@@ -99,6 +99,10 @@ class registerSpace {
     Dyninst::Register allocateRegister(codeGen &gen, bool noCost, bool realReg = false);
     bool allocateSpecificRegister(codeGen &gen, Dyninst::Register r, bool noCost = true);
 
+    bool canAllocate(Dyninst::Register reg) const;
+    Dyninst::Register allocateGprBlock(Dyninst::RegKind regKind, uint32_t numRegs, Dyninst::Alignment alignment);
+    void freeGprBlock(Dyninst::Register regBlock);
+
 
     // Like allocate, but don't keep it around; if someone else tries to
     // allocate they might get this one.
