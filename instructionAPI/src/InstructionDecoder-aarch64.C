@@ -288,10 +288,10 @@ namespace Dyninst { namespace InstructionAPI {
 
     insn = b.start[3] << 24 | b.start[2] << 16 | b.start[1] << 8 | b.start[0];
 
-    mainDecode();
+    auto inst = mainDecode();
     b.start += 4;
 
-    return *(insn_in_progress.get());
+    return inst;
   }
 
   /* replace this function with a more generic function, which is setRegWidth
@@ -328,7 +328,7 @@ void InstructionDecoder_aarch64::set32Mode()
         Result(rT, rT == u32 ? unsign_extend32(len, val) : unsign_extend64(len, val)));
     Expression::Ptr rhs = Immediate::makeImmediate(Result(u32, unsign_extend32(6, shiftAmount)));
 
-    insn_in_progress->appendOperand(makeLeftShiftExpression(lhs, rhs, rT), true, false);
+    add_operand(makeLeftShiftExpression(lhs, rhs, rT), true, false);
   }
 
   void InstructionDecoder_aarch64::processShiftFieldShiftedInsn(int len, int val) {
@@ -343,18 +343,18 @@ void InstructionDecoder_aarch64::set32Mode()
     switch(shiftField) // add-sub (shifted) and logical (shifted)
     {
       case 0:
-        insn_in_progress->appendOperand(makeLeftShiftExpression(lhs, rhs, rT), true, false);
+        add_operand(makeLeftShiftExpression(lhs, rhs, rT), true, false);
         break;
       case 1:
-        insn_in_progress->appendOperand(makeRightLogicalShiftExpression(lhs, rhs, rT), true, false);
+        add_operand(makeRightLogicalShiftExpression(lhs, rhs, rT), true, false);
         break;
       case 2:
-        insn_in_progress->appendOperand(makeRightArithmeticShiftExpression(lhs, rhs, rT), true,
+        add_operand(makeRightArithmeticShiftExpression(lhs, rhs, rT), true,
                                         false);
         break;
       case 3:
         if(IS_INSN_LOGICAL_SHIFT(insn)) // logical (shifted) -- not applicable to add-sub (shifted)
-          insn_in_progress->appendOperand(makeRightRotateExpression(lhs, rhs, rT), true, false);
+          add_operand(makeRightRotateExpression(lhs, rhs, rT), true, false);
         else
           isValid = false;
         break;
@@ -372,7 +372,7 @@ void InstructionDecoder_aarch64::set32Mode()
           Result(rT, rT == u32 ? unsign_extend32(len, val) : unsign_extend64(len, val)));
       Expression::Ptr rhs = Immediate::makeImmediate(Result(u32, unsign_extend32(4, shiftAmount)));
 
-      insn_in_progress->appendOperand(makeLeftShiftExpression(lhs, rhs, rT), true, false);
+      add_operand(makeLeftShiftExpression(lhs, rhs, rT), true, false);
     } else {
       isValid = false;
     }
@@ -462,21 +462,21 @@ void InstructionDecoder_aarch64::set32Mode()
       {
         Expression::Ptr CRm = Immediate::makeImmediate(Result(u8, unsign_extend32(4, crmField)));
 
-        insn_in_progress->appendOperand(CRm, true, false);
+        add_operand(CRm, true, false);
       } else if(crnField == 2) // hint
       {
         int immVal = (crmField << 3) | (op2Field & 7);
 
         Expression::Ptr imm = Immediate::makeImmediate(Result(u8, unsign_extend32(7, immVal)));
 
-        insn_in_progress->appendOperand(imm, true, false);
+        add_operand(imm, true, false);
       } else if(crnField == 4) // msr (immediate)
       {
         int pstatefield = (op1Field << 3) | (op2Field & 7);
-        insn_in_progress->appendOperand(
+        add_operand(
             Immediate::makeImmediate(Result(u8, unsign_extend32(6, pstatefield))), true, false);
 
-        insn_in_progress->appendOperand(
+        add_operand(
             Immediate::makeImmediate(Result(u8, unsign_extend32(4, crmField))), true, false);
         isPstateWritten = true;
       } else {
@@ -484,17 +484,17 @@ void InstructionDecoder_aarch64::set32Mode()
       }
     } else if(op0Field == 1) // sys, sysl
     {
-      insn_in_progress->appendOperand(
+      add_operand(
           Immediate::makeImmediate(Result(u8, unsign_extend32(3, op1Field))), true, false);
-      insn_in_progress->appendOperand(
+      add_operand(
           Immediate::makeImmediate(Result(u8, unsign_extend32(4, crnField))), true, false);
-      insn_in_progress->appendOperand(
+      add_operand(
           Immediate::makeImmediate(Result(u8, unsign_extend32(4, crmField))), true, false);
-      insn_in_progress->appendOperand(
+      add_operand(
           Immediate::makeImmediate(Result(u8, unsign_extend32(3, op2Field))), true, false);
 
       bool isRtRead = (field<21, 21>(insn) == 0);
-      insn_in_progress->appendOperand(makeRtExpr(), isRtRead, !isRtRead);
+      add_operand(makeRtExpr(), isRtRead, !isRtRead);
     } else // mrs (register), msr
     {
       bool isRtRead = (field<21, 21>(insn) == 0);
@@ -507,11 +507,10 @@ void InstructionDecoder_aarch64::set32Mode()
         reg = aarch64::IMPLEMENTATION_DEFINED_SYSREG;
       else
         reg = sysRegMap(systemRegEncoding);
-      insn_in_progress->appendOperand(makeRegisterExpression(reg), !isRtRead, isRtRead);
-      insn_in_progress->appendOperand(makeRtExpr(), isRtRead, !isRtRead);
+      add_operand(makeRegisterExpression(reg), !isRtRead, isRtRead);
+      add_operand(makeRtExpr(), isRtRead, !isRtRead);
       if(!isRtRead) {
-        auto &ops = insn_in_progress->m_Operands;
-        std::reverse(ops.begin(), ops.end());
+        std::reverse(m_Operands.begin(), m_Operands.end());
       }
     }
   }
@@ -528,7 +527,7 @@ void InstructionDecoder_aarch64::set32Mode()
   template <unsigned int endBit, unsigned int startBit> void InstructionDecoder_aarch64::OPRsize() {
     size = field<startBit, endBit>(insn);
 
-    entryID insnID = insn_in_progress->getOperation().operationID;
+    entryID insnID = this->operationID;
 
     if((insnID == aarch64_op_pmull_advsimd && (size == 0x1 || size == 0x2)) ||
        ((IS_INSN_SIMD_3DIFF(insn) || IS_INSN_SCALAR_3DIFF(insn)) && size == 0x3) ||
@@ -710,7 +709,7 @@ void InstructionDecoder_aarch64::set32Mode()
               isValid = false;
           }
         } else {
-          entryID op_ = insn_in_progress->getOperation().operationID;
+          entryID op_ = this->operationID;
 
           switch(_szField) {
             case 0x0:
@@ -750,7 +749,7 @@ void InstructionDecoder_aarch64::set32Mode()
         else
           reg = _Q == 0x1 ? aarch64::q0 : aarch64::d0;
       } else if(IS_INSN_SIMD_3DIFF(insn)) {
-        entryID op_ = insn_in_progress->getOperation().operationID;
+        entryID op_ = this->operationID;
 
         if(op_ == aarch64_op_addhn_advsimd || op_ == aarch64_op_subhn_advsimd ||
            op_ == aarch64_op_raddhn_advsimd || op_ == aarch64_op_rsubhn_advsimd)
@@ -765,7 +764,7 @@ void InstructionDecoder_aarch64::set32Mode()
       reg = makeAarch64RegID(reg, encoding);
     } else if(isFPInsn && !((IS_INSN_FP_CONV_FIX(insn) || (IS_INSN_FP_CONV_INT(insn))) &&
                             !IS_SOURCE_GP(insn))) {
-      if(insn_in_progress->getOperation().operationID == aarch64_op_fcvt_float) {
+      if(this->operationID == aarch64_op_fcvt_float) {
         int opc = field<15, 16>(insn);
 
         if(opc == _typeField || opc == 0x2)
@@ -817,7 +816,7 @@ void InstructionDecoder_aarch64::set32Mode()
       isRdRead = true;
     // for SIMD/Scalar vector indexed set, some instructions read Rd and some don't. This can be
     // determined from the highest bit of the opcode field (bit 15)
-    insn_in_progress->appendOperand(reg, isRdRead, true);
+    add_operand(reg, isRdRead, true);
   }
 
   void InstructionDecoder_aarch64::OPRcmode() { cmode = field<12, 15>(insn); }
@@ -1032,12 +1031,12 @@ void InstructionDecoder_aarch64::set32Mode()
         reg = _Q == 1 ? aarch64::q0 : aarch64::d0;
 
         for(int reg_index = immlo; reg_index > 0; reg_index--) {
-          insn_in_progress->appendOperand(
+          add_operand(
               makeRegisterExpression(makeAarch64RegID(reg, (encoding + reg_index) % 32)), true,
               false);
         }
       } else if(IS_INSN_SIMD_3DIFF(insn)) {
-        entryID op_ = insn_in_progress->getOperation().operationID;
+        entryID op_ = this->operationID;
 
         if(op_ == aarch64_op_saddw_advsimd || op_ == aarch64_op_ssubw_advsimd ||
            op_ == aarch64_op_addhn_advsimd || op_ == aarch64_op_subhn_advsimd ||
@@ -1053,7 +1052,7 @@ void InstructionDecoder_aarch64::set32Mode()
         reg = makeAarch64RegID(reg, encoding);
     } else if(isFPInsn &&
               !((IS_INSN_FP_CONV_FIX(insn) || (IS_INSN_FP_CONV_INT(insn))) && IS_SOURCE_GP(insn))) {
-      if(insn_in_progress->getOperation().operationID == aarch64_op_fcvt_float) {
+      if(this->operationID == aarch64_op_fcvt_float) {
         switch(_typeField) {
           case 0:
             reg = aarch64::s0;
@@ -1597,45 +1596,45 @@ Expression::Ptr scale = Immediate::makeImmediate(Result(u32, unsign_extend32(sca
   void InstructionDecoder_aarch64::LIndex() {
     // never be called
     if(IS_INSN_LD_LITERAL(insn)) {
-      insn_in_progress->appendOperand(makeMemRefIndexLiteral(), true, false);
+      add_operand(makeMemRefIndexLiteral(), true, false);
     }
     // ******************
     // load register offset
     // ******************
     else if(IS_INSN_LDST_REG(insn)) {
-      insn_in_progress->appendOperand(makeMemRefReg(), true, false);
+      add_operand(makeMemRefReg(), true, false);
     }
     // ******************
     // load unsigned imm
     // ******************
     else if(IS_INSN_LDST_UIMM(insn)) {
-      insn_in_progress->appendOperand(makeMemRefIndexUImm(), true, false);
+      add_operand(makeMemRefIndexUImm(), true, false);
     }
     // ******************
     // load pre, unscaled and unprivlidged
     // ******************
     else if(IS_INSN_LDST_PRE(insn) || IS_INSN_LDST_UNPRIV(insn) || IS_INSN_LDST_UNSCALED(insn)) {
-      insn_in_progress->appendOperand(makeMemRefIndexPre(), true, false);
+      add_operand(makeMemRefIndexPre(), true, false);
     } else if(IS_INSN_LDST_POST(insn)) {
-      insn_in_progress->appendOperand(makeMemRefIndexPost(), true, false);
+      add_operand(makeMemRefIndexPost(), true, false);
     }
     // ****************************
     // load PAIR pre, post, offset
     // ****************************
     else if(IS_INSN_LDST_PAIR_PRE(insn) || IS_INSN_LDST_PAIR_NOALLOC(insn) ||
             IS_INSN_LDST_PAIR_OFFSET(insn)) {
-      insn_in_progress->appendOperand(makeMemRefPairPre(), true, false);
+      add_operand(makeMemRefPairPre(), true, false);
     } else if(IS_INSN_LDST_PAIR_POST(insn)) {
-      insn_in_progress->appendOperand(makeMemRefPairPost(), true, false);
+      add_operand(makeMemRefPairPost(), true, false);
     }
     // ****************************
     // load exclusive instructions
     // ****************************
     else if(IS_INSN_LDST_EX(insn)) {
       if(!IS_INSN_LDST_EX_PAIR(insn)) { // Rt2 field == 31, non-pair op
-        insn_in_progress->appendOperand(makeMemRefEx(), true, false);
+        add_operand(makeMemRefEx(), true, false);
       } else { // pair
-        insn_in_progress->appendOperand(makeMemRefExPair(), true, false);
+        add_operand(makeMemRefExPair(), true, false);
       }
     }
     // ****************************
@@ -1643,14 +1642,14 @@ Expression::Ptr scale = Immediate::makeImmediate(Result(u32, unsign_extend32(sca
     // load SIMD multiple structures post increment
     // ****************************
     else if(IS_INSN_LDST_SIMD_MULT(insn) || IS_INSN_LDST_SIMD_MULT_POST(insn)) {
-      insn_in_progress->appendOperand(makeMemRefSIMD_MULT(), true, false);
+      add_operand(makeMemRefSIMD_MULT(), true, false);
     }
     // ****************************
     // load SIMD single structure &
     // load SIMD single structure post increment
     // ****************************
     else if(IS_INSN_LDST_SIMD_SING(insn) || IS_INSN_LDST_SIMD_SING_POST(insn)) {
-      insn_in_progress->appendOperand(makeMemRefSIMD_SING(), true, false);
+      add_operand(makeMemRefSIMD_SING(), true, false);
     } else
       assert(0);
   }
@@ -1662,35 +1661,35 @@ Expression::Ptr scale = Immediate::makeImmediate(Result(u32, unsign_extend32(sca
                  // ld/st register offset
                  // ******************
     else if(IS_INSN_LDST_REG(insn)) {
-      insn_in_progress->appendOperand(makeMemRefReg(), false, true);
+      add_operand(makeMemRefReg(), false, true);
     } else if(IS_INSN_LDST_UIMM(insn)) {
-      insn_in_progress->appendOperand(makeMemRefIndexUImm(), false, true);
+      add_operand(makeMemRefIndexUImm(), false, true);
     }
     // ******************
     // ld/st pre and post, unscaled and unprivilidged
     // ******************
     else if(IS_INSN_LDST_PRE(insn) || IS_INSN_LDST_UNPRIV(insn) || IS_INSN_LDST_UNSCALED(insn)) {
-      insn_in_progress->appendOperand(makeMemRefIndexPre(), false, true);
+      add_operand(makeMemRefIndexPre(), false, true);
     } else if(IS_INSN_LDST_POST(insn)) {
-      insn_in_progress->appendOperand(makeMemRefIndexPost(), false, true);
+      add_operand(makeMemRefIndexPost(), false, true);
     }
     // ****************************
     // ld/st PAIR pre, post, offset
     // ****************************
     else if(IS_INSN_LDST_PAIR_PRE(insn) || IS_INSN_LDST_PAIR_NOALLOC(insn) ||
             IS_INSN_LDST_PAIR_OFFSET(insn)) {
-      insn_in_progress->appendOperand(makeMemRefPairPre(), false, true);
+      add_operand(makeMemRefPairPre(), false, true);
     } else if(IS_INSN_LDST_PAIR_POST(insn)) {
-      insn_in_progress->appendOperand(makeMemRefPairPost(), false, true);
+      add_operand(makeMemRefPairPost(), false, true);
     }
     // ****************************
     // ld/st exclusive instructions
     // ****************************
     else if(IS_INSN_LDST_EX(insn)) {
       if(!IS_INSN_LDST_EX_PAIR(insn)) { // Rt2 field == 31, non-pair op
-        insn_in_progress->appendOperand(makeMemRefEx(), false, true);
+        add_operand(makeMemRefEx(), false, true);
       } else { // pair
-        insn_in_progress->appendOperand(makeMemRefExPair(), false, true);
+        add_operand(makeMemRefExPair(), false, true);
       }
     }
     // ****************************
@@ -1698,9 +1697,9 @@ Expression::Ptr scale = Immediate::makeImmediate(Result(u32, unsign_extend32(sca
     // store SIMD multiple structures post increment
     // ****************************
     else if(IS_INSN_LDST_SIMD_MULT(insn) || IS_INSN_LDST_SIMD_MULT_POST(insn)) {
-      insn_in_progress->appendOperand(makeMemRefSIMD_MULT(), false, true);
+      add_operand(makeMemRefSIMD_MULT(), false, true);
     } else if(IS_INSN_LDST_SIMD_SING(insn) || IS_INSN_LDST_SIMD_SING_POST(insn)) {
-      insn_in_progress->appendOperand(makeMemRefSIMD_SING(), false, true);
+      add_operand(makeMemRefSIMD_SING(), false, true);
     } else
       assert(0); // un-handled case
   }
@@ -1714,14 +1713,14 @@ Expression::Ptr scale = Immediate::makeImmediate(Result(u32, unsign_extend32(sca
     {
       int branchType = field<21, 22>(insn);
 
-      insn_in_progress->appendOperand(makePCExpr(), false, true, true);
-      insn_in_progress->addSuccessor(makeRnExpr(), field<21, 21>(insn) == 1, true, false, false);
+      add_operand(makePCExpr(), false, true, true);
+      add_successor(makeRnExpr(), field<21, 21>(insn) == 1, true, false, false);
 
       if(branchType == 0x1) {
-        insn_in_progress->addSuccessor(makeFallThroughExpr(), false, false, false, true);
+        add_successor(makeFallThroughExpr(), false, false, false, true);
       }
     } else
-      insn_in_progress->appendOperand(makeRnExpr(), true, false);
+      add_operand(makeRnExpr(), true, false);
   }
 
   void InstructionDecoder_aarch64::OPRRnL() { LIndex(); }
@@ -1731,7 +1730,7 @@ Expression::Ptr scale = Immediate::makeImmediate(Result(u32, unsign_extend32(sca
   void InstructionDecoder_aarch64::OPRRnU() {
     assert(0);
     /* this functions is useless
-insn_in_progress->appendOperand(makeRnExpr(), true, true);
+add_operand(makeRnExpr(), true, true);
 */
   }
 
@@ -1798,7 +1797,7 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
             isValid = false;
         }
       } else if(IS_INSN_SIMD_3DIFF(insn)) {
-        entryID op_ = insn_in_progress->getOperation().operationID;
+        entryID op_ = this->operationID;
 
         if(op_ == aarch64_op_addhn_advsimd || op_ == aarch64_op_subhn_advsimd ||
            op_ == aarch64_op_raddhn_advsimd || op_ == aarch64_op_rsubhn_advsimd)
@@ -1870,10 +1869,10 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
         }
         return Result{dp_float, 0.0};
       }();
-      insn_in_progress->appendOperand(Immediate::makeImmediate(res), true, false);
+      add_operand(Immediate::makeImmediate(res), true, false);
     }
     else
-      insn_in_progress->appendOperand(makeRmExpr(), true, false);
+      add_operand(makeRmExpr(), true, false);
   }
 
   void InstructionDecoder_aarch64::OPRsf() {
@@ -2075,14 +2074,14 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
 
   void InstructionDecoder_aarch64::OPRRt() {
     int encoding = field<0, 4>(insn);
-    entryID op_ = insn_in_progress->getOperation().operationID;
+    entryID op_ = this->operationID;
 
     if(IS_INSN_BRANCHING(insn)) {
       if(encoding == 31)
-        insn_in_progress->appendOperand(
+        add_operand(
             makeRegisterExpression(is64Bit ? aarch64::xzr : aarch64::wzr), true, false);
       else
-        insn_in_progress->appendOperand(
+        add_operand(
             makeRegisterExpression(makeAarch64RegID(is64Bit ? aarch64::x0 : aarch64::w0, encoding)),
             true, false);
     } else if(op_ == aarch64_op_prfm_imm || op_ == aarch64_op_prfm_lit ||
@@ -2096,7 +2095,7 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
       else
         prfop = ArmPrfmTypeImmediate::makeArmPrfmTypeImmediate(arg);
 
-      insn_in_progress->appendOperand(prfop, true, false);
+      add_operand(prfop, true, false);
     }
   }
 
@@ -2111,7 +2110,7 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
       }
       MachRegister reg = _Q == 0x1 ? aarch64::q0 : aarch64::d0;
       for(int it_rpt = rpt * selem - 1; it_rpt >= 0; it_rpt--) {
-        insn_in_progress->appendOperand(
+        add_operand(
             makeRegisterExpression(makeAarch64RegID(reg, (encoding + it_rpt) % 32)), false, true);
       }
     } else if(IS_INSN_LDST_SIMD_SING(insn) || IS_INSN_LDST_SIMD_SING_POST(insn)) {
@@ -2120,11 +2119,11 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
       MachRegister reg = _Q == 0x1 ? aarch64::q0 : aarch64::d0;
 
       for(int it_selem = selem - 1; it_selem >= 0; it_selem--) {
-        insn_in_progress->appendOperand(
+        add_operand(
             makeRegisterExpression(makeAarch64RegID(reg, (encoding + it_selem) % 32)), false, true);
       }
     } else
-      insn_in_progress->appendOperand(makeRtExpr(), false, true);
+      add_operand(makeRtExpr(), false, true);
   }
 
   void InstructionDecoder_aarch64::OPRRtS() {
@@ -2140,7 +2139,7 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
       MachRegister reg = _Q == 0x1 ? aarch64::q0 : aarch64::d0;
 
       for(int it_rpt = rpt * selem - 1; it_rpt >= 0; it_rpt--) {
-        insn_in_progress->appendOperand(
+        add_operand(
             makeRegisterExpression(makeAarch64RegID(reg, (encoding + it_rpt) % 32)), true, false);
       }
     } else if(IS_INSN_LDST_SIMD_SING(insn) || IS_INSN_LDST_SIMD_SING_POST(insn)) {
@@ -2149,11 +2148,11 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
       MachRegister reg = _Q == 0x1 ? aarch64::q0 : aarch64::d0;
 
       for(int it_selem = selem - 1; it_selem >= 0; it_selem--) {
-        insn_in_progress->appendOperand(
+        add_operand(
             makeRegisterExpression(makeAarch64RegID(reg, (encoding + it_selem) % 32)), true, false);
       }
     } else
-      insn_in_progress->appendOperand(makeRtExpr(), true, false);
+      add_operand(makeRtExpr(), true, false);
   }
 
   Expression::Ptr InstructionDecoder_aarch64::makeRt2Expr() {
@@ -2177,18 +2176,18 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
   void InstructionDecoder_aarch64::OPRRt2() { assert(0); }
 
   void InstructionDecoder_aarch64::OPRRt2L() {
-    insn_in_progress->appendOperand(makeRt2Expr(), false, true);
+    add_operand(makeRt2Expr(), false, true);
   }
 
   void InstructionDecoder_aarch64::OPRRt2S() {
-    insn_in_progress->appendOperand(makeRt2Expr(), true, false);
+    add_operand(makeRt2Expr(), true, false);
   }
 
   template <unsigned int endBit, unsigned int startBit> void InstructionDecoder_aarch64::OPRcond() {
     int condVal = field<startBit, endBit>(insn);
     if(IS_INSN_B_COND(insn)) {
-      insn_in_progress->getOperation().mnemonic += ".";
-      insn_in_progress->getOperation().mnemonic += condNames[condVal];
+      this->mnemonic += ".";
+      this->mnemonic += condNames[condVal];
     } else {
       if(IS_INSN_COND_SELECT(insn))
         fix_condinsn_alias_and_cond(condVal);
@@ -2196,7 +2195,7 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
         oprRotateAmt++;
 
       Expression::Ptr cond = ArmConditionImmediate::makeArmConditionImmediate(Result(u8, condVal));
-      insn_in_progress->appendOperand(cond, true, false);
+      add_operand(cond, true, false);
     }
 
     isPstateRead = true;
@@ -2208,7 +2207,7 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
     } else {
       unsigned int nzcvVal = field<0, 3>(insn);
       Expression::Ptr nzcv = Immediate::makeImmediate(Result(u8, nzcvVal));
-      insn_in_progress->appendOperand(nzcv, true, false);
+      add_operand(nzcv, true, false);
 
       isPstateWritten = true;
       oprRotateAmt++;
@@ -2244,7 +2243,7 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
     else {
       Expression::Ptr scale =
           Immediate::makeImmediate(Result(u32, unsign_extend32(6 + is64Bit, 64 - scaleVal)));
-      insn_in_progress->appendOperand(scale, true, false);
+      add_operand(scale, true, false);
     }
   }
 
@@ -2265,7 +2264,7 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
   }
 
   void InstructionDecoder_aarch64::OPRRa() {
-    insn_in_progress->appendOperand(makeRaExpr(), true, false);
+    add_operand(makeRaExpr(), true, false);
 
     oprRotateAmt++;
   }
@@ -2326,7 +2325,7 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
   }
 
   void InstructionDecoder_aarch64::OPRRs() {
-    insn_in_progress->appendOperand(makeRsExpr(), false, true);
+    add_operand(makeRsExpr(), false, true);
   }
 
   void InstructionDecoder_aarch64::makeBranchTarget(bool branchIsCall, bool bIsConditional,
@@ -2336,10 +2335,10 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
     int64_t offset = sign_extend64(immLen + 2, immVal * 4);
     Expression::Ptr rhs = Immediate::makeImmediate(Result(s64, offset));
 
-    insn_in_progress->addSuccessor(makeAddExpression(lhs, rhs, s64), branchIsCall, false,
+    add_successor(makeAddExpression(lhs, rhs, s64), branchIsCall, false,
                                    bIsConditional, false);
     if(branchIsCall) {
-      insn_in_progress->addSuccessor(makeFallThroughExpr(), false, false, false, true);
+      add_successor(makeFallThroughExpr(), false, false, false, true);
     }
   }
 
@@ -2441,7 +2440,7 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
   }
 
   bool InstructionDecoder_aarch64::fix_bitfieldinsn_alias(int immr_, int imms) {
-    entryID modifiedID = insn_in_progress->getOperation().operationID;
+    entryID modifiedID = this->operationID;
     bool do_further_processing = true;
 
     switch(field<27, 30>(insn)) {
@@ -2487,14 +2486,14 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
         isValid = false;
     }
 
-    insn_in_progress->getOperation().operationID = modifiedID;
-    insn_in_progress->getOperation().mnemonic = bitfieldInsnAliasMap(modifiedID);
+    this->operationID = modifiedID;
+    this->mnemonic = bitfieldInsnAliasMap(modifiedID);
 
     return do_further_processing;
   }
 
   void InstructionDecoder_aarch64::fix_condinsn_alias_and_cond(int& cond) {
-    entryID modifiedID = insn_in_progress->getOperation().operationID;
+    entryID modifiedID = this->operationID;
     if(modifiedID == aarch64_op_csel)
       return;
 
@@ -2531,8 +2530,8 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
       skipRn = skipRm = true;
     }
 
-    insn_in_progress->getOperation().operationID = modifiedID;
-    insn_in_progress->getOperation().mnemonic = condInsnAliasMap(modifiedID);
+    this->operationID = modifiedID;
+    this->mnemonic = condInsnAliasMap(modifiedID);
     if(skipRm)
       cond = ((cond % 2) == 0) ? (cond + 1) : (cond - 1);
   }
@@ -2541,7 +2540,7 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
     if(field<30, 30>(insn) != 1 || field<28, 28>(insn) != 0)
       return;
 
-    string cur_mnemonic = insn_in_progress->getOperation().mnemonic;
+    string cur_mnemonic = this->mnemonic;
     bool add2 = false;
 
     if(IS_INSN_SIMD_3DIFF(insn) || IS_INSN_SCALAR_3DIFF(insn))
@@ -2561,7 +2560,7 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
     }
 
     if(add2)
-      insn_in_progress->getOperation().mnemonic = cur_mnemonic + "2";
+      this->mnemonic = cur_mnemonic + "2";
   }
 
   template <unsigned int endBit, unsigned int startBit> void InstructionDecoder_aarch64::OPRimm() {
@@ -2571,13 +2570,13 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
     if(IS_INSN_LDST(insn)) {
       if(IS_INSN_LD_LITERAL(insn)) {
         Expression::Ptr literal = makeMemRefIndexLiteral();
-        insn_in_progress->appendOperand(literal, true, false);
+        add_operand(literal, true, false);
       } else if(IS_INSN_LDST_POST(insn)) {
         Expression::Ptr offset = makeMemRefIndex_offset9();
-        insn_in_progress->appendOperand(offset, true, false);
+        add_operand(offset, true, false);
       } else if(IS_INSN_LDST_PAIR_POST(insn)) {
         Expression::Ptr offset = makeMemRefPair_offset7();
-        insn_in_progress->appendOperand(offset, true, false);
+        add_operand(offset, true, false);
       }
 
       return;
@@ -2600,7 +2599,7 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
           else
             imm = makeLogicalImm<uint32_t>(immr, immVal, immLen, u32);
 
-          insn_in_progress->appendOperand(imm, true, false);
+          add_operand(imm, true, false);
         } else {
           entryID curID;
 
@@ -2614,7 +2613,7 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
             if(!fix_bitfieldinsn_alias(immr, immVal))
               return;
 
-            curID = insn_in_progress->getOperation().operationID;
+            curID = this->operationID;
             if(curID == aarch64_op_lsl_ubfm || curID == aarch64_op_lsr_ubfm)
               isLsrLsl = true;
 
@@ -2634,14 +2633,14 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
 
           if(!isLsrLsl) {
             imm = Immediate::makeImmediate(Result(u32, unsign_extend32(immLen, immVal)));
-            insn_in_progress->appendOperand(imm, true, false);
+            add_operand(imm, true, false);
             oprRotateAmt++;
           }
         }
 
         if(IS_INSN_BITFIELD(insn)) {
           imm = Immediate::makeImmediate(Result(u32, unsign_extend32(immrLen, immr)));
-          insn_in_progress->appendOperand(imm, true, false);
+          add_operand(imm, true, false);
           if(!isLsrLsl)
             oprRotateAmt--;
         }
@@ -2653,11 +2652,11 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
       {
         if(IS_INSN_LOGICAL_SHIFT(insn) && shiftField == 0 && field<5, 9>(insn) == 0x1F &&
            immVal == 0) {
-          insn_in_progress->getOperation().operationID = aarch64_op_mov_orr_log_shift;
-          insn_in_progress->getOperation().mnemonic = "mov";
+          this->operationID = aarch64_op_mov_orr_log_shift;
+          this->mnemonic = "mov";
           skipRn = true;
 
-          insn_in_progress->appendOperand(makeRmExpr(), true, false);
+          add_operand(makeRmExpr(), true, false);
         } else {
           processShiftFieldShiftedInsn(immLen, immVal);
 
@@ -2679,7 +2678,7 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
         }
         Expression::Ptr expr = makeOptionExpression(immLen, immVal);
 
-        insn_in_progress->appendOperand(expr, true, false);
+        add_operand(expr, true, false);
       } else {
         isValid = false;
       }
@@ -2692,14 +2691,14 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
 
       bool branchIsCall = bIsConditional ? false : (field<31, 31>(insn) == 1);
 
-      insn_in_progress->appendOperand(makePCExpr(), false, true, true);
+      add_operand(makePCExpr(), false, true, true);
       makeBranchTarget(branchIsCall, bIsConditional, immVal, immLen);
 
       if(hasb5)
-        insn_in_progress->appendOperand(makeb40Expr(), true, false);
+        add_operand(makeb40Expr(), true, false);
 
       if(bIsConditional)
-        insn_in_progress->addSuccessor(makeFallThroughExpr(), false, false, true, true);
+        add_successor(makeFallThroughExpr(), false, false, true, true);
     } else if(IS_INSN_PCREL_ADDR(insn)) // pc-relative addressing
     {
       if(IS_FIELD_IMMLO(startBit, endBit)) {
@@ -2711,21 +2710,21 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
         offset = offset << (page * 12);
         int size_ = immloLen + immLen + (page * 12);
 
-        // insn_in_progress->appendOperand(makePCExpr(), true, false);
+        // add_operand(makePCExpr(), true, false);
         Expression::Ptr imm =
             Immediate::makeImmediate(Result(s64, (offset << (64 - size_)) >> (64 - size_)));
 
-        insn_in_progress->appendOperand(makeAddExpression(makePCExpr(), imm, u64), true, false);
+        add_operand(makeAddExpression(makePCExpr(), imm, u64), true, false);
       } else
         isValid = false;
     } else if(isFPInsn) {
       if(isSinglePrec())
-        insn_in_progress->appendOperand(fpExpand<uint32_t, sp_float>(immVal), true, false);
+        add_operand(fpExpand<uint32_t, sp_float>(immVal), true, false);
       else
-        insn_in_progress->appendOperand(fpExpand<uint64_t, dp_float>(immVal), true, false);
+        add_operand(fpExpand<uint64_t, dp_float>(immVal), true, false);
     } else if(IS_INSN_EXCEPTION(insn)) {
       Expression::Ptr imm = Immediate::makeImmediate(Result(u16, immVal));
-      insn_in_progress->appendOperand(imm, true, false);
+      add_operand(imm, true, false);
       isPstateRead = true;
     } else if(isSIMDInsn) {
       if(IS_INSN_SIMD_EXTR(insn)) {
@@ -2733,14 +2732,14 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
           if((immVal & 0x8) == 0) {
             Expression::Ptr imm =
                 Immediate::makeImmediate(Result(u32, unsign_extend32(immLen - 1, immVal & 0x7)));
-            insn_in_progress->appendOperand(imm, true, false);
+            add_operand(imm, true, false);
             oprRotateAmt++;
           } else
             isValid = false;
         } else {
           Expression::Ptr imm =
               Immediate::makeImmediate(Result(u32, unsign_extend32(immLen, immVal)));
-          insn_in_progress->appendOperand(imm, true, false);
+          add_operand(imm, true, false);
         }
       } else if(IS_INSN_SIMD_SHIFT_IMM(insn) || IS_INSN_SCALAR_SHIFT_IMM(insn)) {
         // immh
@@ -2778,7 +2777,7 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
         else if(startBit == 16 && endBit == 18) {
           int opcode = field<11, 15>(insn);
           int shift = 0, isRightShift = 1, elemWidth = (immlo << immLen) | immVal;
-          entryID insnID = insn_in_progress->getOperation().operationID;
+          entryID insnID = this->operationID;
           bool isScalar = field<28, 28>(insn) ? true : false;
 
           // check if shift is left; if it is, the immediate has to be processed in a different
@@ -2816,7 +2815,7 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
           if(isValid) {
             Expression::Ptr imm =
                 Immediate::makeImmediate(Result(u32, unsign_extend32(immloLen + immLen, shift)));
-            insn_in_progress->appendOperand(imm, true, false);
+            add_operand(imm, true, false);
           }
         } else
           isValid = false;
@@ -2827,60 +2826,47 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
 
       Expression::Ptr imm = Immediate::makeImmediate(Result(
           rT, rT == u32 ? unsign_extend32(immLen, immVal) : unsign_extend64(immLen, immVal)));
-      insn_in_progress->appendOperand(imm, true, false);
+      add_operand(imm, true, false);
     }
   }
 
   void InstructionDecoder_aarch64::reorderOperands() {
     if(oprRotateAmt) {
-      std::vector<Operand> curOperands = insn_in_progress->getAllOperands();
-
-      if(curOperands.empty())
+      if(m_Operands.empty())
         assert(!"empty operand list found while re-ordering operands");
 
-      std::swap(curOperands[1], curOperands[3]);
+      std::swap(m_Operands[1], m_Operands[3]);
 
       while(oprRotateAmt--)
-        std::rotate(curOperands.begin(), curOperands.begin() + 1, curOperands.begin() + 3);
+        std::rotate(m_Operands.begin(), m_Operands.begin() + 1, m_Operands.begin() + 3);
 
-      insn_in_progress->m_Operands.assign(curOperands.begin(), curOperands.end());
     } else if(IS_INSN_LDST_POST(insn) || IS_INSN_LDST_PAIR_POST(insn)) {
-      std::vector<Operand> curOperands = insn_in_progress->getAllOperands();
-      std::iter_swap(curOperands.begin(), curOperands.end() - 1);
-      insn_in_progress->m_Operands.assign(curOperands.begin(), curOperands.end());
+      std::iter_swap(m_Operands.begin(), m_Operands.end() - 1);
     } else if(IS_INSN_LDST_PAIR(insn)) {
-      std::vector<Operand> curOperands = insn_in_progress->getAllOperands();
-      assert(curOperands.size() == 4 || curOperands.size() == 3);
-      if(curOperands.size() == 3) {
-        curOperands.insert(curOperands.begin(), curOperands.back());
-        curOperands.pop_back();
-      } else if(curOperands.size() == 4) {
-        std::iter_swap(curOperands.begin(), curOperands.end() - 1);
+      assert(m_Operands.size() == 4 || m_Operands.size() == 3);
+      if(m_Operands.size() == 3) {
+        m_Operands.insert(m_Operands.begin(), m_Operands.back());
+        m_Operands.pop_back();
+      } else if(m_Operands.size() == 4) {
+        std::iter_swap(m_Operands.begin(), m_Operands.end() - 1);
       }
-      insn_in_progress->m_Operands.assign(curOperands.begin(), curOperands.end());
     } else if(IS_INSN_LDST_EX_PAIR(insn)) {
-      std::vector<Operand> curOperands = insn_in_progress->getAllOperands();
-      if(curOperands.size() == 3) {
-        curOperands.insert(curOperands.begin(), curOperands.back());
-        curOperands.pop_back();
-      } else if(curOperands.size() == 4) {
-        curOperands.insert(curOperands.begin() + 1, curOperands.back());
-        curOperands.pop_back();
+      if(m_Operands.size() == 3) {
+        m_Operands.insert(m_Operands.begin(), m_Operands.back());
+        m_Operands.pop_back();
+      } else if(m_Operands.size() == 4) {
+        m_Operands.insert(m_Operands.begin() + 1, m_Operands.back());
+        m_Operands.pop_back();
       }
-      insn_in_progress->m_Operands.assign(curOperands.begin(), curOperands.end());
     } else if(IS_INSN_ST_EX(insn)) {
-      std::vector<Operand> curOperands = insn_in_progress->getAllOperands();
-      if(curOperands.size() == 3) {
-        curOperands.insert(curOperands.begin() + 1, curOperands.back());
-        curOperands.pop_back();
-        insn_in_progress->m_Operands.assign(curOperands.begin(), curOperands.end());
+      if(m_Operands.size() == 3) {
+        m_Operands.insert(m_Operands.begin() + 1, m_Operands.back());
+        m_Operands.pop_back();
       } else {
-        auto &ops = insn_in_progress->m_Operands;
-        std::reverse(ops.begin(), ops.end());
+        std::reverse(m_Operands.begin(), m_Operands.end());
       }
     } else {
-      auto &ops = insn_in_progress->m_Operands;
-      std::reverse(ops.begin(), ops.end());
+      std::reverse(m_Operands.begin(), m_Operands.end());
     }
   }
 
@@ -2891,11 +2877,11 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
       for(int imm_index = 0; imm_index < 8; imm_index++)
         imm |= (simdAlphabetImm & (1 << imm_index)) ? (0xFFULL << (imm_index * 8)) : 0;
 
-      insn_in_progress->appendOperand(Immediate::makeImmediate(Result(u64, imm)), true, false);
+      add_operand(Immediate::makeImmediate(Result(u64, imm)), true, false);
     } else if(cmode == 0xF) {
       // fmov (vector, immediate)
       // TODO: check with Bill if this is fine
-      insn_in_progress->appendOperand(Immediate::makeImmediate(Result(u8, simdAlphabetImm)), true,
+      add_operand(Immediate::makeImmediate(Result(u8, simdAlphabetImm)), true,
                                       false);
     } else {
       int shiftAmt = 0;
@@ -2915,7 +2901,7 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
       Expression::Ptr rhs = Immediate::makeImmediate(Result(u32, unsign_extend32(5, shiftAmt)));
       Expression::Ptr imm = makeLeftShiftExpression(lhs, rhs, u64);
 
-      insn_in_progress->appendOperand(imm, true, false);
+      add_operand(imm, true, false);
     }
   }
 
@@ -2924,7 +2910,6 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
   bool InstructionDecoder_aarch64::pre_process_checks(const aarch64_insn_entry& entry) {
     bool ret = false;
     entryID insnID = entry.op;
-    const string& mnemonic = entry.mnemonic;
 
     vector<entryID> simdCompareRegInsns = {aarch64_op_cmeq_advsimd_reg, aarch64_op_cmge_advsimd_reg,
                                            aarch64_op_cmgt_advsimd_reg, aarch64_op_cmhi_advsimd,
@@ -2966,13 +2951,11 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
     return ret;
   }
 
-  bool InstructionDecoder_aarch64::decodeOperands(const Instruction* insn_to_complete) {
+  bool InstructionDecoder_aarch64::decodeOperands() {
     int insn_table_index = findInsnTableIndex(0);
     isValid = !pre_process_checks(aarch64_insn_entry::main_insn_table[insn_table_index]);
     const auto& insn_table_entry = isValid ? aarch64_insn_entry::main_insn_table[insn_table_index]
                                            : aarch64_insn_entry::main_insn_table[0];
-
-    Dyninst::read_memory_as<decltype(insn)>(insn_to_complete->ptr());
 
     if(IS_INSN_LDST_REG(insn) || IS_INSN_ADDSUB_EXT(insn) || IS_INSN_ADDSUB_SHIFT(insn) ||
        IS_INSN_LOGICAL_SHIFT(insn))
@@ -2986,10 +2969,10 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
       isValid = false;
 
     if(!isValid) {
-      insn_in_progress->getOperation().mnemonic = INVALID_ENTRY.mnemonic;
-      insn_in_progress->getOperation().operationID = INVALID_ENTRY.op;
-      insn_in_progress->m_Operands.clear();
-      insn_in_progress->m_Successors.clear();
+      this->mnemonic = INVALID_ENTRY.mnemonic;
+      this->operationID = INVALID_ENTRY.op;
+      this->m_Operands.clear();
+      this->m_CFT_Targets.clear();
     } else {
       reorderOperands();
 
@@ -3001,20 +2984,20 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
         processAlphabetImm();
       }
 
-      entryID insnID = insn_in_progress->getOperation().operationID;
+      entryID insnID = this->operationID;
       vector<entryID> zeroInsnIDs = {aarch64_op_cmeq_advsimd_zero,  aarch64_op_cmge_advsimd_zero,
                                      aarch64_op_cmgt_advsimd_zero,  aarch64_op_cmle_advsimd,
                                      aarch64_op_cmlt_advsimd,       aarch64_op_fcmeq_advsimd_zero,
                                      aarch64_op_fcmge_advsimd_zero, aarch64_op_fcmgt_advsimd_zero,
                                      aarch64_op_fcmle_advsimd,      aarch64_op_fcmlt_advsimd};
       if(find(zeroInsnIDs.begin(), zeroInsnIDs.end(), insnID) != zeroInsnIDs.end())
-        insn_in_progress->appendOperand(Immediate::makeImmediate(Result(u32, 0)), true, false);
+        add_operand(Immediate::makeImmediate(Result(u32, 0)), true, false);
 
       if(IS_INSN_LDST_SIMD_MULT_POST(insn) || IS_INSN_LDST_SIMD_SING_POST(insn))
-        insn_in_progress->appendOperand(makeRnExpr(), false, true, true);
+        add_operand(makeRnExpr(), false, true, true);
 
       if(isPstateWritten || isPstateRead)
-        insn_in_progress->appendOperand(makePstateExpr(), isPstateRead, isPstateWritten, true);
+        add_operand(makePstateExpr(), isPstateRead, isPstateWritten, true);
     }
 
     return true;
@@ -3051,22 +3034,33 @@ insn_in_progress->appendOperand(makeRnExpr(), true, true);
 
   void InstructionDecoder_aarch64::setFlags() { isPstateWritten = true; }
 
-  void InstructionDecoder_aarch64::mainDecode() {
+  Instruction InstructionDecoder_aarch64::mainDecode() {
+	reset_operands();
+
     int insn_table_index = findInsnTableIndex(0);
     const auto& insn_table_entry = aarch64_insn_entry::main_insn_table[insn_table_index];
 
-    insn_in_progress = makeInstruction(insn_table_entry.op, insn_table_entry.mnemonic, 4,
-                                       reinterpret_cast<unsigned char*>(&insn));
+    operationID = insn_table_entry.op;
+    mnemonic = (insn_table_entry.mnemonic ? insn_table_entry.mnemonic : "");
 
     modify_mnemonic_simd_upperhalf_insns();
 
-    decodeOperands(insn_in_progress.get());
+    decodeOperands();
 
-    insn_in_progress->arch_decoded_from = Arch_aarch64;
+    Operation oper(operationID, mnemonic, m_Arch);
     if(insn_table_entry.operands[0] != nullptr) {
-      insn_in_progress->m_InsnOp.isVectorInsn =
+      oper.isVectorInsn =
           (insn_table_entry.operands[0] == &InstructionDecoder_aarch64::setSIMDMode);
     }
-    return;
+
+    unsigned char bytes[sizeof(decltype(insn))];
+    Dyninst::write_memory_as(bytes, insn);
+
+    Instruction inst(std::move(oper), sizeof(bytes), bytes, m_Arch);
+    inst.m_Successors = std::move(m_CFT_Targets);
+    inst.m_Operands = std::move(m_Operands);
+
+    return inst;
   }
+
 }}

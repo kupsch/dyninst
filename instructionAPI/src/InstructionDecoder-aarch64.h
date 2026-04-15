@@ -60,17 +60,20 @@ namespace Dyninst { namespace InstructionAPI {
 
   private:
 
+    entryID operationID{aarch64_op_INVALID};
+    std::string mnemonic{};
+
     bool isPstateRead{}, isPstateWritten{};
     bool isFPInsn{}, isSIMDInsn{};
     bool skipRn{}, skipRm{};
     bool is64Bit{};
     bool isValid{};
 
-    void mainDecode();
+    Instruction mainDecode();
 
     int findInsnTableIndex(unsigned int);
 
-    bool decodeOperands(const Instruction* insn_to_complete);
+    bool decodeOperands();
 
     /*members for handling operand re-ordering, will be removed later once a generic operand
      * ordering method is incorporated*/
@@ -80,7 +83,6 @@ namespace Dyninst { namespace InstructionAPI {
     void reorderOperands();
 
     unsigned int insn{};
-    boost::shared_ptr<Instruction> insn_in_progress;
 
     template <int start, int end> int field(unsigned int raw) {
       return (raw >> (start) & (0xFFFFFFFF >> (31 - (end - start))));
