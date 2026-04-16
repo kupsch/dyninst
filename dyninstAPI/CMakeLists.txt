@@ -84,6 +84,7 @@ set(_private_headers
     src/codegen.h
     src/codegen-power.h
     src/codegen-x86.h
+    src/codegen/RegControl.h
     src/codeRange.h
     src/debug.h
     src/dynProcess.h
@@ -267,6 +268,16 @@ if(DYNINST_CODEGEN_ARCH_I386 OR DYNINST_CODEGEN_ARCH_X86_64)
   list(
     APPEND
     _sources
+    src/codegen/emitters/x86/IA32/EmitterIA32Dyn.C
+    src/codegen/emitters/x86/IA32/EmitterIA32Dyn.h
+    src/codegen/emitters/x86/IA32/EmitterIA32Stat.C
+    src/codegen/emitters/x86/IA32/EmitterIA32Stat.h
+    src/codegen/emitters/x86/IA32/EmitterIA32.C
+    src/codegen/emitters/x86/IA32/EmitterIA32.h
+    src/codegen/emitters/x86/Emitterx86.C
+    src/codegen/emitters/x86/Emitterx86.h
+    src/codegen/emitters/x86/generators.C
+    src/codegen/emitters/x86/generators.h
     src/RegisterConversion-x86.C
     src/registerSpace/registerSpace-x86.C
     src/Relocation/Widgets/CFWidget-x86.C
