@@ -103,11 +103,15 @@ class DYNINST_EXPORT BPatch_object {
 
     // BPatch_object::name
     // Returns the file name of the object
-    std::string name();
+    std::string name() const;
 
     // BPatch_object::pathName
     // Returns the full pathname of the object
-    std::string pathName();
+    std::string pathName() const;
+
+    // BPatch_object::isSharedLib
+    // Returns true if this object represents a shared library
+    bool isSharedLib() const;
 
     
     // BPatch_object::offsetToAddr
