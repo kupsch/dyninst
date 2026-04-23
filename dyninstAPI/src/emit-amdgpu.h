@@ -153,7 +153,7 @@ public:
 
   bool emitMoveRegToReg(registerSlot *src, registerSlot *dest, codeGen &gen);
 
-  Register emitCall(opCode op, codeGen &gen, const std::vector<Dyninst::DyninstAPI::codeGenASTPtr> &operands, bool noCost,
+  Register emitCall(opCode op, codeGen &gen, const std::vector<Dyninst::DyninstAPI::codeGenASTPtr> &operands,
                     func_instance *callee);
 
   void emitGetRetVal(Register dest, bool addr_of, codeGen &gen);
@@ -179,12 +179,11 @@ public:
   bool emitBTRestores(baseTramp *bt, codeGen &gen);
 
   // TODO: requires allocating / deallocating register (see next comment).
-  void emitStoreImm(Address addr, int imm, codeGen &gen, bool noCost);
+  void emitStoreImm(Address addr, int imm, codeGen &gen);
 
   // TODO: Implementation requires full 'codeGen' and 'registerSpace' class to
-  // allocate register. ALSO FIXME: bool noCost seems like a redundant
-  // parameter.
-  void emitAddSignedImm(Address addr, int imm, codeGen &gen, bool noCost);
+  // allocate register.
+  void emitAddSignedImm(Address addr, int imm, codeGen &gen);
 
   bool emitPush(codeGen &, Register);
 

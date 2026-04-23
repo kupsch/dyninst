@@ -198,8 +198,7 @@ void registerSpace::createRegSpaceInt(std::vector<registerSlot *> &registers,
 
 }
 
-bool registerSpace::allocateSpecificRegister(codeGen &gen, Register num,
-					     bool noCost)
+bool registerSpace::allocateSpecificRegister(codeGen &gen, Register num)
 {
   regalloc_printf("Allocating specific register %u\n", num.getId());
 
@@ -225,7 +224,7 @@ bool registerSpace::allocateSpecificRegister(codeGen &gen, Register num,
 	return false;
     }
     else if (reg->keptValue) {
-      if (!stealRegister(num, gen, noCost)) {
+      if (!stealRegister(num, gen)) {
 	regalloc_printf("Error: register has cached value, unable to steal!\n");
 	return false;
       }
@@ -240,12 +239,12 @@ bool registerSpace::allocateSpecificRegister(codeGen &gen, Register num,
     return true;
 }
 
-Register registerSpace::getScratchRegister(codeGen &gen, bool noCost, bool realReg) {
+Register registerSpace::getScratchRegister(codeGen &gen, bool realReg) {
     std::vector<Register> empty;
-    return getScratchRegister(gen, empty, noCost, realReg);
+    return getScratchRegister(gen, empty, realReg);
 }
 
-Register registerSpace::getScratchRegister(codeGen &gen, std::vector<Register> &excluded, bool noCost, bool realReg) {
+Register registerSpace::getScratchRegister(codeGen &gen, std::vector<Register> &excluded, bool realReg) {
   std::vector<registerSlot *> couldBeStolen;
   std::vector<registerSlot *> couldBeSpilled;
 
@@ -302,7 +301,7 @@ Register registerSpace::getScratchRegister(codeGen &gen, std::vector<Register> &
     // Still?
     if (toUse == NULL) {
         for (unsigned i = 0; i < couldBeStolen.size(); i++) {
-            if (stealRegister(couldBeStolen[i]->number, gen, noCost)) {
+            if (stealRegister(couldBeStolen[i]->number, gen)) {
                 toUse = couldBeStolen[i];
                 break;
             }
@@ -323,11 +322,10 @@ Register registerSpace::getScratchRegister(codeGen &gen, std::vector<Register> &
 }
 
 Register registerSpace::allocateRegister(codeGen &gen,
-                                         bool noCost,
 					 bool realReg)
 {
   regalloc_printf("Allocating and retaining register...\n");
-  Register reg = getScratchRegister(gen, noCost, realReg);
+  Register reg = getScratchRegister(gen, realReg);
   regalloc_printf("retaining register %u\n", reg.getId());
   if (reg == Null_Register) return Null_Register;
   if (realReg) {
@@ -340,7 +338,7 @@ Register registerSpace::allocateRegister(codeGen &gen,
   return reg;
 }
 
-bool registerSpace::stealRegister(Register reg, codeGen &gen, bool /*noCost*/) {
+bool registerSpace::stealRegister(Register reg, codeGen &gen) {
     // Can be made a return false; this for correctness.
     assert(registers_[reg]->refCount == 0);
     assert(registers_[reg]->keptValue == true);
@@ -565,8 +563,7 @@ bool registerSpace::readProgramRegister(codeGen &gen,
     emitLoadPreviousStackFrameRegister((Address)source,
                                        destination,
                                        gen,
-                                       size,
-                                       true);
+                                       size);
     return true;
 #elif defined(DYNINST_CODEGEN_ARCH_AARCH64)
 //#warning "This fucntion is not implemented yet!"

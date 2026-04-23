@@ -111,7 +111,7 @@ public:
     // See comment on 32-bit emitCall
     virtual Register emitCall(opCode op, codeGen &gen,
                               const std::vector<codeGenASTPtr> &operands,
-                              bool noCost, func_instance *callee);
+                              func_instance *callee);
     void emitGetRetVal(Register dest, bool addr_of, codeGen &gen);
     void emitGetRetAddr(Register dest, codeGen &gen);
     void emitGetParam(Register dest, Register param_num, instPoint::Type pt_type, opCode op, bool addr_of, codeGen &gen);
@@ -123,8 +123,8 @@ public:
     void emitStackAlign(int offset, codeGen &gen);
     bool emitBTSaves(baseTramp* bt, codeGen &gen);
     bool emitBTRestores(baseTramp* bt, codeGen &gen);
-    void emitStoreImm(Address addr, int imm, codeGen &gen, bool noCost);
-    void emitAddSignedImm(Address addr, int imm, codeGen &gen, bool noCost);
+    void emitStoreImm(Address addr, int imm, codeGen &gen);
+    void emitAddSignedImm(Address addr, int imm, codeGen &gen);
     bool emitPush(codeGen &gen, Register pushee);
     bool emitPop(codeGen &gen, Register popee);
 

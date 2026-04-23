@@ -148,47 +148,47 @@ public:
 // The return value is a magic "hand this in when we update" black box;
 // emitA handles emission of things like ifs that need to be updated later.
 codeBufIndex_t emitA(opCode op, Dyninst::Register src1, Dyninst::Register src2, long dst,
-                     codeGen &gen, Dyninst::DyninstAPI::RegControl rc, bool noCost);
+                     codeGen &gen, Dyninst::DyninstAPI::RegControl rc);
 
 // for operations requiring a Dyninst::Register to be returned
 // (e.g., getRetValOp, getRetAddrOp, getParamOp)
 Dyninst::Register emitR(opCode op, Dyninst::Register src1, Dyninst::Register src2, Dyninst::Register dst,
-               codeGen &gen, bool noCost, 
+               codeGen &gen,
                const instPoint *location, bool for_multithreaded);
 
 // for general arithmetic and logic operations which return nothing
 void     emitV(opCode op, Dyninst::Register src1, Dyninst::Register src2, Dyninst::Register dst,
-               codeGen &gen, bool noCost, 
+               codeGen &gen,
                registerSpace *rs = NULL, int size = 4,
                const instPoint * location = NULL, AddressSpace * proc = NULL, bool s = true);
 
 // for loadOp and loadConstOp (reading from an Dyninst::Address)
 void     emitVload(opCode op, Dyninst::Address src1, Dyninst::Register src2, Dyninst::Register dst,
-                   codeGen &gen, bool noCost, 
+                   codeGen &gen,
                    registerSpace *rs = NULL, int size = 4, 
                    const instPoint * location = NULL, AddressSpace * proc = NULL);
 
 // for storeOp (writing to an Dyninst::Address)
 void     emitVstore(opCode op, Dyninst::Register src1, Dyninst::Register src2, Dyninst::Address dst,
-                    codeGen &gen, bool noCost, 
+                    codeGen &gen,
                     registerSpace *rs = NULL, int size = 4, 
                     const instPoint * location = NULL, AddressSpace * proc = NULL);
 
 // for loadOp and loadConstOp (reading from an Dyninst::Address)
 void     emitVload(opCode op, const image_variable* src1, Dyninst::Register src2, Dyninst::Register dst,
-                   codeGen &gen, bool noCost, 
+                   codeGen &gen,
                    registerSpace *rs = NULL, int size = 4, 
                    const instPoint * location = NULL, AddressSpace * proc = NULL);
 
 // for storeOp (writing to an Dyninst::Address)
 void     emitVstore(opCode op, Dyninst::Register src1, Dyninst::Register src2, const image_variable* dst,
-                    codeGen &gen, bool noCost, 
+                    codeGen &gen,
                     registerSpace *rs = NULL, int size = 4, 
                     const instPoint * location = NULL, AddressSpace * proc = NULL);
 
 // and the retyped original emitImm companion
 void     emitImm(opCode op, Dyninst::Register src, Dyninst::RegValue src2imm, Dyninst::Register dst,
-                 codeGen &gen, bool noCost,
+                 codeGen &gen,
                  registerSpace *rs = NULL, bool s = true);
 
 
@@ -200,14 +200,13 @@ typedef BPatch_addrSpec_NP BPatch_countSpec_NP;
 
 void emitJmpMC(int condition, int offset, codeGen &gen);
 
-void emitASload(const BPatch_addrSpec_NP *as, Dyninst::Register dest, int stackShift, codeGen &gen, bool noCost);
+void emitASload(const BPatch_addrSpec_NP *as, Dyninst::Register dest, int stackShift, codeGen &gen);
 
-void emitCSload(const BPatch_countSpec_NP *as, Dyninst::Register dest, codeGen &gen, bool noCost);
+void emitCSload(const BPatch_countSpec_NP *as, Dyninst::Register dest, codeGen &gen);
 
 // VG(11/06/01): moved here and added location
 Dyninst::Register emitFuncCall(opCode op, codeGen &gen,
                       std::vector<Dyninst::DyninstAPI::codeGenASTPtr> &operands,
-					  bool noCost, 
                       func_instance *func);
 
 extern Dyninst::Address getMaxBranch();
@@ -222,11 +221,11 @@ bool writeFunctionPtr(AddressSpace *p, Dyninst::Address addr, func_instance *f);
  * false if the platform can't perform any optimizations.
  **/
 //Store constant in memory at address
-bool emitStoreConst(Dyninst::Address addr, int imm, codeGen &gen, bool noCost);
+bool emitStoreConst(Dyninst::Address addr, int imm, codeGen &gen);
 //Add constant to memory at address
-bool emitAddSignedImm(Dyninst::Address addr, long int imm, codeGen &gen, bool noCost);
+bool emitAddSignedImm(Dyninst::Address addr, long int imm, codeGen &gen);
 //Subtract constant from memory at address
-bool emitSubSignedImm(Dyninst::Address addr, long int imm, codeGen &gen, bool noCost);
+bool emitSubSignedImm(Dyninst::Address addr, long int imm, codeGen &gen);
 
 inline bool isPowerOf2(int value, int &result) {
   if(value <= 0) {

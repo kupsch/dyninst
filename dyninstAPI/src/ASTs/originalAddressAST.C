@@ -6,19 +6,19 @@
 
 namespace Dyninst { namespace DyninstAPI {
 
-bool originalAddressAST::generateCode_phase2(codeGen &gen, bool noCost, Dyninst::Address &,
+bool originalAddressAST::generateCode_phase2(codeGen &gen, Dyninst::Address &,
                                               Dyninst::Register &retReg) {
   RETURN_KEPT_REG(retReg);
 
   if(retReg == Dyninst::Null_Register) {
-    retReg = allocateAndKeep(gen, noCost);
+    retReg = allocateAndKeep(gen);
   }
 
   if(retReg == Dyninst::Null_Register) {
     return false;
   }
 
-  emitVload(loadConstOp, gen.point()->addr_compat(), retReg, retReg, gen, noCost);
+  emitVload(loadConstOp, gen.point()->addr_compat(), retReg, retReg, gen);
 
   return true;
 }

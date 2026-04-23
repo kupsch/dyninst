@@ -876,7 +876,7 @@ bool EmitterAMD64::clobberAllFuncCall( registerSpace *rs,
 static Register amd64_arg_regs[] = {REGNUM_RDI, REGNUM_RSI, REGNUM_RDX, REGNUM_RCX, REGNUM_R8, REGNUM_R9};
 #define AMD64_ARG_REGS (sizeof(amd64_arg_regs) / sizeof(Register))
 Register EmitterAMD64::emitCall(opCode op, codeGen &gen, const std::vector<Dyninst::DyninstAPI::codeGenASTPtr> &operands,
-                                bool noCost, func_instance *callee)
+                                func_instance *callee)
 {
    assert(op == callOp);
    std::vector <Register> srcs;
@@ -977,7 +977,6 @@ Register EmitterAMD64::emitCall(opCode op, codeGen &gen, const std::vector<Dynin
       if(u >= (int)AMD64_ARG_REGS)
       {
          if (!operands[u]->generateCode_phase2(gen,
-                                               noCost,
                                                unused,
                                                reg)) assert(0);
          assert(reg != Null_Register);
@@ -987,7 +986,7 @@ Register EmitterAMD64::emitCall(opCode op, codeGen &gen, const std::vector<Dynin
       }
       else
       {
-          if (gen.rs()->allocateSpecificRegister(gen, (unsigned) amd64_arg_regs[u], true))
+          if (gen.rs()->allocateSpecificRegister(gen, (unsigned) amd64_arg_regs[u]))
             reg = amd64_arg_regs[u];
          else {
             cerr << "Error: tried to allocate register " << amd64_arg_regs[u] << " and failed!" << endl;
@@ -995,7 +994,6 @@ Register EmitterAMD64::emitCall(opCode op, codeGen &gen, const std::vector<Dynin
          }
          gen.markRegDefined(reg);
          if (!operands[u]->generateCode_phase2(gen,
-                                               noCost,
                                                unused,
                                                reg)) assert(0);
 	 if (reg != amd64_arg_regs[u]) {
@@ -1057,7 +1055,7 @@ Register EmitterAMD64::emitCall(opCode op, codeGen &gen, const std::vector<Dynin
    // allocate a (virtual) register to store the return value
    // We do this now because the state is correct again in the RS.
 
-   Register ret = gen.rs()->allocateRegister(gen, noCost);
+   Register ret = gen.rs()->allocateRegister(gen);
    gen.markRegDefined(ret);
    emitMovRegToReg64(ret, REGNUM_EAX, true, gen);
 
@@ -1889,13 +1887,13 @@ bool EmitterAMD64::emitBTRestores(baseTramp* bt, codeGen &gen)
     return true;
 }
 
-void EmitterAMD64::emitStoreImm(Address addr, int imm, codeGen &gen, bool noCost) 
+void EmitterAMD64::emitStoreImm(Address addr, int imm, codeGen &gen)
 {
    if (!isImm64bit(addr) && !isImm64bit(imm)) {
       emitMovImmToMem(addr, imm, gen);
    }
    else {
-      Register r = gen.rs()->allocateRegister(gen, noCost);
+      Register r = gen.rs()->allocateRegister(gen);
       gen.markRegDefined(r);
       emitMovImmToReg64(r, addr, true, gen);
       emitMovImmToRM64(r, 0, imm, true, gen);
@@ -1903,13 +1901,13 @@ void EmitterAMD64::emitStoreImm(Address addr, int imm, codeGen &gen, bool noCost
    }
 }
 
-void EmitterAMD64::emitAddSignedImm(Address addr, int imm, codeGen &gen,bool noCost)
+void EmitterAMD64::emitAddSignedImm(Address addr, int imm, codeGen &gen)
 {
    if (!isImm64bit(addr) && !isImm64bit(imm)) {
       Dyninst::DyninstAPI::x86::emitAddMem(addr, imm, gen);
    }
    else {
-      Register r = gen.rs()->allocateRegister(gen, noCost);      
+      Register r = gen.rs()->allocateRegister(gen);
       gen.markRegDefined(r);
       emitMovImmToReg64(r, addr, true, gen);
       emitAddRM64(r, imm, true, gen);
@@ -1991,7 +1989,7 @@ void EmitterAMD64::emitStoreShared(Register source, const image_variable *var, b
   }
   
   // temporary virtual register for storing destination address
-  Register dest = gen.rs()->allocateRegister(gen, false); 
+  Register dest = gen.rs()->allocateRegister(gen);
   gen.markRegDefined(dest);
  
   // load register with address from jump slot

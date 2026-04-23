@@ -43,30 +43,30 @@ using codeGenASTPtr = Dyninst::DyninstAPI::codeGenASTPtr;
 
 // TODO: ALL THESE MUST GO AWAY ENTIRELY AS CODEGEN MATURES
 void emitImm(opCode /* op */, Register /* src1 */, RegValue /* src2imm */, Register /* dest */,
-             codeGen & /* gen */, bool /*noCost*/, registerSpace * /* rs */, bool /* s */) {
+             codeGen & /* gen */, registerSpace * /* rs */, bool /* s */) {
   assert(!"Not implemented for AMDGPU");
 }
 
-Register emitFuncCall(opCode, codeGen &, std::vector<codeGenASTPtr> &, bool, Address) {
+Register emitFuncCall(opCode, codeGen &, std::vector<codeGenASTPtr> &, Address) {
   assert(!"Not implemented for AMDGPU");
   return 0;
 }
 
 Register emitFuncCall(opCode /* op */, codeGen & /* gen */,
-                      std::vector<codeGenASTPtr> & /* operands */, bool /* noCost */,
+                      std::vector<codeGenASTPtr> & /* operands */,
                       func_instance * /* callee */) {
   assert(!"Not implemented for AMDGPU");
   return 0;
 }
 
 codeBufIndex_t emitA(opCode /* op */, Register /* src1 */, Register, long /* dest */,
-                     codeGen & /* gen */, Dyninst::DyninstAPI::RegControl /* rc */, bool) {
+                     codeGen & /* gen */, Dyninst::DyninstAPI::RegControl /* rc */) {
   assert(!"Not implemented for AMDGPU");
   return 0;
 }
 
 Register emitR(opCode /* op */, Register /* src1 */, Register /* src2 */, Register /* dest */,
-               codeGen & /* gen */, bool /*noCost*/, const instPoint *, bool /*for_MT*/) {
+               codeGen & /* gen */, const instPoint *, bool /*for_MT*/) {
   assert(!"Not implemented for AMDGPU");
   return 0;
 }
@@ -76,34 +76,34 @@ void emitJmpMC(int /*condition*/, int /*offset*/, codeGen &) {
 }
 
 void emitASload(const BPatch_addrSpec_NP * /* as */, Register /* dest */, int /* stackShift */,
-                codeGen & /* gen */, bool) {
+                codeGen & /* gen */) {
   assert(!"Not imeplemented for AMDGPU");
 }
 
-void emitCSload(const BPatch_addrSpec_NP *, Register, codeGen &, bool) {
+void emitCSload(const BPatch_addrSpec_NP *, Register, codeGen &) {
   assert(!"Not imeplemented for AMDGPU");
 }
 
 void emitVload(opCode /* op */, Address /* src1 */, Register /* src2 */, Register /* dest */,
-               codeGen & /* gen */, bool /*noCost*/, registerSpace * /*rs*/, int /* size */,
+               codeGen & /* gen */, registerSpace * /*rs*/, int /* size */,
                const instPoint * /* location */, AddressSpace *) {
   assert(!"Not imeplemented for AMDGPU");
 }
 
 void emitVstore(opCode /* op */, Register /* src1 */, Register /*src2*/, Address /* dest */,
-                codeGen & /* gen */, bool, registerSpace * /* rs */, int /* size */,
+                codeGen & /* gen */, registerSpace * /* rs */, int /* size */,
                 const instPoint * /* location */, AddressSpace *) {
   assert(!"Not imeplemented for AMDGPU");
 }
 
 void emitV(opCode /* op */, Register /* src1 */, Register /* src2 */, Register /* dest */,
-           codeGen & /* gen */, bool /*noCost*/, registerSpace * /*rs*/, int /* size */,
+           codeGen & /* gen */, registerSpace * /*rs*/, int /* size */,
            const instPoint * /* location */, AddressSpace * /* proc */, bool /* s */) {
   assert(!"Not imeplemented for AMDGPU");
 }
 
 void emitLoadPreviousStackFrameRegister(Address /* register_num */, Register /* dest */,
-                                        codeGen & /* gen */, int /* size */, bool) {}
+                                        codeGen & /* gen */, int /* size */) {}
 
 void emitStorePreviousStackFrameRegister(Address, Register, codeGen &, int, bool) {}
 

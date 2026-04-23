@@ -50,7 +50,7 @@ operandAST::operandAST(operandType ot, const image_variable *iv)
   }
 }
 
-bool operandAST::generateCode_phase2(codeGen &gen, bool noCost, Address &,
+bool operandAST::generateCode_phase2(codeGen &gen, Address &,
                                          Dyninst::Register &retReg) {
   RETURN_KEPT_REG(retReg);
 
@@ -59,7 +59,7 @@ bool operandAST::generateCode_phase2(codeGen &gen, bool noCost, Address &,
 
   // Allocate a register to return
   if(retReg == Dyninst::Null_Register) {
-    retReg = allocateAndKeep(gen, noCost);
+    retReg = allocateAndKeep(gen);
   }
   Dyninst::Register temp;
   int tSize;
@@ -78,12 +78,12 @@ bool operandAST::generateCode_phase2(codeGen &gen, bool noCost, Address &,
 #else
     case operandType::Constant:
       assert(oVar == NULL);
-      emitVload(loadConstOp, (Address)oValue, retReg, retReg, gen, noCost, gen.rs(), size,
+      emitVload(loadConstOp, (Address)oValue, retReg, retReg, gen, gen.rs(), size,
                 gen.point(), gen.addrSpace());
       break;
 #endif
     case operandType::DataIndir:
-      if(!operand_->generateCode_phase2(gen, noCost, addr, src)) {
+      if(!operand_->generateCode_phase2(gen, addr, src)) {
         ERROR_RETURN;
       }
       REGISTER_CHECK(src);
@@ -94,7 +94,7 @@ bool operandAST::generateCode_phase2(codeGen &gen, bool noCost, Address &,
       } else {
         tSize = sizeof(long);
       }
-      emitV(loadIndirOp, src, 0, retReg, gen, noCost, gen.rs(), tSize, gen.point(),
+      emitV(loadIndirOp, src, 0, retReg, gen, gen.rs(), tSize, gen.point(),
             gen.addrSpace());
       gen.rs()->freeRegister(src);
       break;
@@ -105,32 +105,32 @@ bool operandAST::generateCode_phase2(codeGen &gen, bool noCost, Address &,
       break;
     case operandType::variableAddr:
       assert(oVar);
-      emitVariableLoad(loadConstOp, retReg, retReg, gen, noCost, gen.rs(), size, gen.point(),
+      emitVariableLoad(loadConstOp, retReg, retReg, gen, gen.rs(), size, gen.point(),
                        gen.addrSpace());
       break;
     case operandType::variableValue:
       assert(oVar);
-      emitVariableLoad(loadOp, retReg, retReg, gen, noCost, gen.rs(), size, gen.point(),
+      emitVariableLoad(loadOp, retReg, retReg, gen, gen.rs(), size, gen.point(),
                        gen.addrSpace());
       break;
     case operandType::ReturnVal:
-      src = emitR(getRetValOp, 0, Dyninst::Null_Register, retReg, gen, noCost, gen.point(),
+      src = emitR(getRetValOp, 0, Dyninst::Null_Register, retReg, gen, gen.point(),
                   gen.addrSpace()->multithread_capable());
       REGISTER_CHECK(src);
       if(src != retReg) {
         // Move src to retReg. Can't simply return src, since it was not
         // allocated properly
-        emitImm(orOp, src, 0, retReg, gen, noCost, gen.rs());
+        emitImm(orOp, src, 0, retReg, gen, gen.rs());
       }
       break;
     case operandType::ReturnAddr:
-      src = emitR(getRetAddrOp, 0, Dyninst::Null_Register, retReg, gen, noCost, gen.point(),
+      src = emitR(getRetAddrOp, 0, Dyninst::Null_Register, retReg, gen, gen.point(),
                   gen.addrSpace()->multithread_capable());
       REGISTER_CHECK(src);
       if(src != retReg) {
         // Move src to retReg. Can't simply return src, since it was not
         // allocated properly
-        emitImm(orOp, src, 0, retReg, gen, noCost, gen.rs());
+        emitImm(orOp, src, 0, retReg, gen, gen.rs());
       }
       break;
     case operandType::Param:
@@ -151,25 +151,25 @@ bool operandAST::generateCode_phase2(codeGen &gen, bool noCost, Address &,
           assert(0);
           break;
       }
-      src = emitR(paramOp, (Address)oValue, Dyninst::Null_Register, retReg, gen, noCost,
+      src = emitR(paramOp, (Address)oValue, Dyninst::Null_Register, retReg, gen,
                   gen.point(), gen.addrSpace()->multithread_capable());
       REGISTER_CHECK(src);
       if(src != retReg) {
         // Move src to retReg. Can't simply return src, since it was not
         // allocated properly
-        emitImm(orOp, src, 0, retReg, gen, noCost, gen.rs());
+        emitImm(orOp, src, 0, retReg, gen, gen.rs());
       }
     } break;
     case operandType::DataAddr:
       assert(oVar == NULL);
       addr = reinterpret_cast<Address>(oValue);
-      emitVload(loadOp, addr, retReg, retReg, gen, noCost, NULL, size, gen.point(),
+      emitVload(loadOp, addr, retReg, retReg, gen, NULL, size, gen.point(),
                 gen.addrSpace());
       break;
     case operandType::FrameAddr:
       addr = (Address)oValue;
-      temp = gen.rs()->allocateRegister(gen, noCost);
-      emitVload(loadFrameRelativeOp, addr, temp, retReg, gen, noCost, gen.rs(), size, gen.point(),
+      temp = gen.rs()->allocateRegister(gen);
+      emitVload(loadFrameRelativeOp, addr, temp, retReg, gen, gen.rs(), size, gen.point(),
                 gen.addrSpace());
       gen.rs()->freeRegister(temp);
       break;
@@ -178,7 +178,7 @@ bool operandAST::generateCode_phase2(codeGen &gen, bool noCost, Address &,
       // This codeGenAST holds the register number, and loperand holds offset.
       assert(operand_);
       addr = (Address)operand_->getOValue();
-      emitVload(loadRegRelativeOp, addr, (long)oValue, retReg, gen, noCost, gen.rs(), size,
+      emitVload(loadRegRelativeOp, addr, (long)oValue, retReg, gen, gen.rs(), size,
                 gen.point(), gen.addrSpace());
       break;
     case operandType::ConstantString:
@@ -194,7 +194,7 @@ bool operandAST::generateCode_phase2(codeGen &gen, bool noCost, Address &,
       }
 
       if(!gen.addrSpace()->needsPIC()) {
-        emitVload(loadConstOp, addr, retReg, retReg, gen, noCost, gen.rs(), size, gen.point(),
+        emitVload(loadConstOp, addr, retReg, retReg, gen, gen.rs(), size, gen.point(),
                   gen.addrSpace());
       } else {
         gen.codeEmitter()->emitLoadShared(loadConstOp, retReg, NULL, true, size, gen, addr);
@@ -235,22 +235,22 @@ int_variable *operandAST::lookUpVar(AddressSpace *as) {
 }
 
 void operandAST::emitVariableLoad(opCode op, Dyninst::Register src2, Dyninst::Register dest,
-                                      codeGen &gen, bool noCost, registerSpace *rs, int size_,
+                                      codeGen &gen, registerSpace *rs, int size_,
                                       const instPoint *point, AddressSpace *as) {
   int_variable *var = lookUpVar(as);
   if(var && !as->needsPIC(var)) {
-    emitVload(op, var->getAddress(), src2, dest, gen, noCost, rs, size_, point, as);
+    emitVload(op, var->getAddress(), src2, dest, gen, rs, size_, point, as);
   } else {
     gen.codeEmitter()->emitLoadShared(op, dest, oVar, (var != NULL), size_, gen, 0);
   }
 }
 
 void operandAST::emitVariableStore(opCode op, Dyninst::Register src1, Dyninst::Register src2,
-                                       codeGen &gen, bool noCost, registerSpace *rs, int size_,
+                                       codeGen &gen, registerSpace *rs, int size_,
                                        const instPoint *point, AddressSpace *as) {
   int_variable *var = lookUpVar(as);
   if(var && !as->needsPIC(var)) {
-    emitVstore(op, src1, src2, var->getAddress(), gen, noCost, rs, size_, point, as);
+    emitVstore(op, src1, src2, var->getAddress(), gen, rs, size_, point, as);
   } else {
     gen.codeEmitter()->emitStoreShared(src1, oVar, (var != NULL), size_, gen);
   }

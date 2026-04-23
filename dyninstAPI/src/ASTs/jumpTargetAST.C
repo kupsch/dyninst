@@ -10,7 +10,7 @@
 
 namespace Dyninst { namespace DyninstAPI {
 
-bool dynamicJumpTargetAST::generateCode_phase2(codeGen &gen, bool noCost, Address &retAddr,
+bool dynamicJumpTargetAST::generateCode_phase2(codeGen &gen, Address &retAddr,
                                                Dyninst::Register &retReg) {
   if(gen.point()->type() != instPoint::PreCall && gen.point()->type() != instPoint::FuncExit &&
      gen.point()->type() != instPoint::PreInsn) {
@@ -21,18 +21,18 @@ bool dynamicJumpTargetAST::generateCode_phase2(codeGen &gen, bool noCost, Addres
   if(insn.isReturn()) {
     // if this is a return instruction our AST reads the top stack value
     if(retReg == Dyninst::Null_Register) {
-      retReg = allocateAndKeep(gen, noCost);
+      retReg = allocateAndKeep(gen);
     }
     if(retReg == Dyninst::Null_Register) {
       return false;
     }
 
 #if defined(DYNINST_CODEGEN_ARCH_I386)
-    emitVload(loadRegRelativeOp, (Address)0, REGNUM_ESP, retReg, gen, noCost);
+    emitVload(loadRegRelativeOp, (Address)0, REGNUM_ESP, retReg, gen);
 #elif defined(DYNINST_CODEGEN_ARCH_X86_64)
-    emitVload(loadRegRelativeOp, (Address)0, REGNUM_RSP, retReg, gen, noCost);
+    emitVload(loadRegRelativeOp, (Address)0, REGNUM_RSP, retReg, gen);
 #elif defined(DYNINST_CODEGEN_ARCH_POWER) // KEVINTODO: untested
-    emitVload(loadRegRelativeOp, (Address)sizeof(Address), REG_SP, retReg, gen, noCost);
+    emitVload(loadRegRelativeOp, (Address)sizeof(Address), REG_SP, retReg, gen);
 #elif defined(DYNINST_CODEGEN_ARCH_AARCH64)
     // #warning "This function is not implemented yet!"
     assert(0);
@@ -46,7 +46,7 @@ bool dynamicJumpTargetAST::generateCode_phase2(codeGen &gen, bool noCost, Addres
     if(!gen.addrSpace()->getDynamicCallSiteArgs(insn, gen.point()->block()->last(), args)) {
       return false;
     }
-    if(!args[0]->generateCode_phase2(gen, noCost, retAddr, retReg)) {
+    if(!args[0]->generateCode_phase2(gen, retAddr, retReg)) {
       return false;
     }
     return true;

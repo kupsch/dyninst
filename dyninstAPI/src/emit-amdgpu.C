@@ -451,7 +451,7 @@ bool EmitterAmdgpuGfx908::emitMoveRegToReg(registerSlot * /* src */, registerSlo
 
 Register EmitterAmdgpuGfx908::emitCall(opCode /* op */, codeGen & /* gen */,
                                        const std::vector<Dyninst::DyninstAPI::codeGenASTPtr> & /* operands */,
-                                       bool /* noCost */, func_instance * /* callee */) {
+                                       func_instance * /* callee */) {
   assert(!"emitCall not implemented yet");
   return 0;
 }
@@ -505,13 +505,11 @@ bool EmitterAmdgpuGfx908::emitBTRestores(baseTramp * /* bt */, codeGen & /* gen 
   return false;
 }
 
-void EmitterAmdgpuGfx908::emitStoreImm(Address /* addr */, int /* imm */, codeGen & /* gen */,
-                                       bool /* noCost */) {
+void EmitterAmdgpuGfx908::emitStoreImm(Address /* addr */, int /* imm */, codeGen & /* gen */) {
   assert(!"emitStoreImm not implemented yet");
 }
 
-void EmitterAmdgpuGfx908::emitAddSignedImm(Address /* addr */, int /* imm */, codeGen & /* gen */,
-                                           bool /* noCost */) {
+void EmitterAmdgpuGfx908::emitAddSignedImm(Address /* addr */, int /* imm */, codeGen & /* gen */) {
   assert(!"emitAddSignedImm not implemented yet");
 }
 

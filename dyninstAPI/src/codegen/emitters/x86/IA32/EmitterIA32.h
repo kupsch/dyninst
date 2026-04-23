@@ -49,7 +49,7 @@ namespace Dyninst { namespace DyninstAPI {
 
     bool clobberAllFuncCall(registerSpace *rs, func_instance *callee) override;
 
-    void emitAddSignedImm(Address addr, int imm, codeGen &gen, bool noCost) override;
+    void emitAddSignedImm(Address addr, int imm, codeGen &gen) override;
 
     bool emitAdjustStackPointer(int index, codeGen &gen) override;
 
@@ -60,13 +60,13 @@ namespace Dyninst { namespace DyninstAPI {
     bool emitBTSaves(baseTramp *bt, codeGen &gen) override;
 
     virtual Register emitCall(opCode op, codeGen &gen, const std::vector<codeGenASTPtr> &operands,
-                              bool noCost, func_instance *callee) override;
+                              func_instance *callee) override;
 
     bool emitCallCleanup(codeGen &gen, func_instance *target, int frame_size,
                          std::vector<Register> &extra_saves);
 
     int emitCallParams(codeGen &gen, const std::vector<codeGenASTPtr> &operands, func_instance *target,
-                       std::vector<Register> &extra_saves, bool noCost);
+                       std::vector<Register> &extra_saves);
 
     bool emitCallRelative(Register, Address, Register, codeGen &) override;
 
@@ -142,7 +142,7 @@ namespace Dyninst { namespace DyninstAPI {
     void emitStoreFrameRelative(Address offset, Register src, Register scratch, int size,
                                 codeGen &gen) override;
 
-    void emitStoreImm(Address addr, int imm, codeGen &gen, bool noCost) override;
+    void emitStoreImm(Address addr, int imm, codeGen &gen) override;
 
     void emitStoreIndir(Register addr_reg, Register src, int size, codeGen &gen) override;
 

@@ -48,7 +48,7 @@ memoryAccessAST::memoryAccessAST(memoryType mem, unsigned which, int size_) : me
   doTypeCheck = BPatch::bpatch->isTypeChecked();
 }
 
-bool memoryAccessAST::generateCode_phase2(codeGen &gen, bool noCost, Dyninst::Address &,
+bool memoryAccessAST::generateCode_phase2(codeGen &gen, Dyninst::Address &,
                                         Dyninst::Register &retReg) {
 
   RETURN_KEPT_REG(retReg);
@@ -57,7 +57,7 @@ bool memoryAccessAST::generateCode_phase2(codeGen &gen, bool noCost, Dyninst::Ad
   const BPatch_addrSpec_NP *start;
   const BPatch_countSpec_NP *count;
   if(retReg == Dyninst::Null_Register) {
-    retReg = allocateAndKeep(gen, noCost);
+    retReg = allocateAndKeep(gen);
   }
   switch(mem_) {
     case memoryType::EffectiveAddr: {
@@ -88,7 +88,7 @@ bool memoryAccessAST::generateCode_phase2(codeGen &gen, bool noCost, Dyninst::Ad
         assert(0);
       }
       start = ma->getStartAddr(which_);
-      emitASload(start, retReg, 0, gen, noCost);
+      emitASload(start, retReg, 0, gen);
       break;
     }
     case memoryType::BytesAccessed: {
@@ -111,7 +111,7 @@ bool memoryAccessAST::generateCode_phase2(codeGen &gen, bool noCost, Dyninst::Ad
         assert(0);
       }
       count = ma->getByteCount(which_);
-      emitCSload(count, retReg, gen, noCost);
+      emitCSload(count, retReg, gen);
       break;
     }
     default:

@@ -642,7 +642,7 @@ unsigned restoreSPRegisters(codeGen &gen,
 }
 
 void emitImm(opCode op, Dyninst::Register src1, RegValue src2imm, Dyninst::Register dest,
-             codeGen &gen, bool noCost, registerSpace * /* rs */, bool s)
+             codeGen &gen, registerSpace * /* rs */, bool s)
 {
     int iop=-1;
     int result=-1;
@@ -666,18 +666,18 @@ void emitImm(opCode op, Dyninst::Register src1, RegValue src2imm, Dyninst::Regis
             return;
         }
         else {
-            Dyninst::Register dest2 = gen.rs()->getScratchRegister(gen, noCost);
-            emitVload(loadConstOp, src2imm, dest2, dest2, gen, noCost);
-            emitV(op, src1, dest2, dest, gen, noCost, gen.rs(), 
+            Dyninst::Register dest2 = gen.rs()->getScratchRegister(gen);
+            emitVload(loadConstOp, src2imm, dest2, dest2, gen);
+            emitV(op, src1, dest2, dest, gen, gen.rs(),
                   gen.width(), gen.point(), gen.addrSpace(), s);
             return;
         }
         break;
         
     case divOp: {
-            Dyninst::Register dest2 = gen.rs()->getScratchRegister(gen, noCost);
-            emitVload(loadConstOp, src2imm, dest2, dest2, gen, noCost);
-            emitV(op, src1, dest2, dest, gen, noCost, gen.rs(),
+            Dyninst::Register dest2 = gen.rs()->getScratchRegister(gen);
+            emitVload(loadConstOp, src2imm, dest2, dest2, gen);
+            emitV(op, src1, dest2, dest, gen, gen.rs(),
                   gen.width(), gen.point(), gen.addrSpace(), s);
             return;
         }
@@ -696,9 +696,9 @@ void emitImm(opCode op, Dyninst::Register src1, RegValue src2imm, Dyninst::Regis
         return;
         break;
     default:
-        Dyninst::Register dest2 = gen.rs()->getScratchRegister(gen, noCost);
-        emitVload(loadConstOp, src2imm, dest2, dest2, gen, noCost);
-        emitV(op, src1, dest2, dest, gen, noCost, gen.rs(),
+        Dyninst::Register dest2 = gen.rs()->getScratchRegister(gen);
+        emitVload(loadConstOp, src2imm, dest2, dest2, gen);
+        emitV(op, src1, dest2, dest, gen, gen.rs(),
               gen.width(), gen.point(), gen.addrSpace(), s);
         return;
         break;
@@ -806,9 +806,9 @@ bool EmitterPOWER::clobberAllFuncCall( registerSpace *rs,
 
 Dyninst::Register emitFuncCall(opCode op,
                       codeGen &gen,
-                      std::vector<codeGenASTPtr> &operands, bool noCost,
+                      std::vector<codeGenASTPtr> &operands,
                       func_instance *callee) {
-    return gen.emitter()->emitCall(op, gen, operands, noCost, callee);
+    return gen.emitter()->emitCall(op, gen, operands, callee);
 }
 
 void EmitterPOWER::emitCallWithSaves(codeGen &gen, Address dest, bool saveToc, bool saveLR, bool saveR12) {
@@ -817,9 +817,9 @@ void EmitterPOWER::emitCallWithSaves(codeGen &gen, Address dest, bool saveToc, b
     if (saveLR) {}
     if (saveR12) {}
 
-    emitVload(loadConstOp, dest, 0, 0, gen, false);
+    emitVload(loadConstOp, dest, 0, 0, gen);
     insnCodeGen::generateMoveToLR(gen, 0);
-    emitVload(loadConstOp, dest, 12, 12, gen, false);
+    emitVload(loadConstOp, dest, 12, 12, gen);
     instruction brl(BRLraw);
     insnCodeGen::generate(gen,brl);
     inst_printf("Generated BRL\n");
@@ -832,7 +832,6 @@ void EmitterPOWER::emitCallWithSaves(codeGen &gen, Address dest, bool saveToc, b
 
 Dyninst::Register EmitterPOWER::emitCallReplacement(opCode ocode,
                                            codeGen &gen,
-                                           bool /* noCost */,
                                            func_instance *callee) {
     // This takes care of the special case where we are replacing an existing
     // linking branch instruction.
@@ -857,7 +856,7 @@ Dyninst::Register EmitterPOWER::emitCallReplacement(opCode ocode,
     }
 
     // Load register with address.
-    emitVload(loadConstOp, callee->addr(), freeReg, freeReg, gen, false);
+    emitVload(loadConstOp, callee->addr(), freeReg, freeReg, gen);
 
     // Move to link register.
     insnCodeGen::generate(gen,mtlr);
@@ -865,7 +864,7 @@ Dyninst::Register EmitterPOWER::emitCallReplacement(opCode ocode,
     Address toc_new = gen.addrSpace()->proc()->getTOCoffsetInfo(callee);
     if (toc_new) {
         // Set up the new TOC value
-        emitVload(loadConstOp, toc_new, freeReg, freeReg, gen, false);
+        emitVload(loadConstOp, toc_new, freeReg, freeReg, gen);
     }
 
     // blr - branch through the link reg.
@@ -876,7 +875,7 @@ Dyninst::Register EmitterPOWER::emitCallReplacement(opCode ocode,
     Address toc_orig = gen.addrSpace()->proc()->getTOCoffsetInfo(caller);
     if (toc_new) {
         // Restore the original TOC value.
-        emitVload(loadConstOp, toc_orig, freeReg, freeReg, gen, false);
+        emitVload(loadConstOp, toc_orig, freeReg, freeReg, gen);
     }
 
     // What to return here?
@@ -891,7 +890,6 @@ Dyninst::Register EmitterPOWER::emitCallReplacement(opCode ocode,
 Dyninst::Register EmitterPOWER::emitCall(opCode ocode,
                                 codeGen &gen,
                                 const std::vector<codeGenASTPtr> &operands,
-                                bool noCost,
                                 func_instance *callee) {
     bool inInstrumentation = true;
 
@@ -899,7 +897,7 @@ Dyninst::Register EmitterPOWER::emitCall(opCode ocode,
     // if false we're in function call replacement
 
     if (ocode == funcJumpOp)
-	return emitCallReplacement(ocode, gen, noCost, callee);
+	return emitCallReplacement(ocode, gen, callee);
 
     //  Sanity check for NULL address argument
     if (!callee) {
@@ -996,10 +994,10 @@ Dyninst::Register EmitterPOWER::emitCall(opCode ocode,
         
         Dyninst::Register reg = Null_Register;
         // Try to allocate the correct parameter register
-        if (gen.rs()->allocateSpecificRegister(gen, registerSpace::r3 + u, true))
+        if (gen.rs()->allocateSpecificRegister(gen, registerSpace::r3 + u))
             reg = registerSpace::r3 + u;
 	Address unused = ADDR_NULL;
-	if (!operands[u]->generateCode_phase2( gen, false, unused, reg)) assert(0);
+	if (!operands[u]->generateCode_phase2( gen, unused, reg)) assert(0);
 	assert(reg != Null_Register);
 	srcs.push_back(reg);
     }
@@ -1083,7 +1081,7 @@ Dyninst::Register EmitterPOWER::emitCall(opCode ocode,
     Dyninst::Register retReg = Null_Register;
     if (inInstrumentation) {
         // get a register to keep the return value in.
-        retReg = gen.rs()->allocateRegister(gen, noCost);        
+        retReg = gen.rs()->allocateRegister(gen);
         // put the return value from register 3 to the newly allocated register.
         insnCodeGen::generateImm(gen, ORILop, 3, retReg, 0);
     }
@@ -1111,7 +1109,7 @@ Dyninst::Register EmitterPOWER::emitCall(opCode ocode,
     
     if (!inInstrumentation && setTOC) {
         // Need to reset the TOC
-        emitVload(loadConstOp, caller_toc, 2, 2, gen, false);
+        emitVload(loadConstOp, caller_toc, 2, 2, gen);
 
         // Also store toc_orig [r2] into the TOC save area [40(r1)].
         // Subsequent code will look for it there.
@@ -1124,7 +1122,7 @@ Dyninst::Register EmitterPOWER::emitCall(opCode ocode,
 
  
 codeBufIndex_t emitA(opCode op, Dyninst::Register src1, Dyninst::Register /*src2*/, long dest,
-	      codeGen &gen, Dyninst::DyninstAPI::RegControl, bool /*noCost*/)
+	      codeGen &gen, Dyninst::DyninstAPI::RegControl)
 {
     codeBufIndex_t retval = 0;
     switch (op) {
@@ -1162,7 +1160,7 @@ codeBufIndex_t emitA(opCode op, Dyninst::Register src1, Dyninst::Register /*src2
 }
 
 Dyninst::Register emitR(opCode op, Dyninst::Register src1, Dyninst::Register src2, Dyninst::Register dest,
-               codeGen &gen, bool /*noCost*/,
+               codeGen &gen,
                const instPoint * /*location*/, bool /*for_MT*/)
 {
 
@@ -1335,14 +1333,14 @@ static inline void moveGPR2531toGPR(codeGen &gen,
 // another. The original value may need to be restored from stack...
 // VG(03/15/02): Made functionality more obvious by adding the above functions
 static inline void emitAddOriginal(Dyninst::Register src, Dyninst::Register acc,
-                                   codeGen &gen, bool noCost)
+                                   codeGen &gen)
 {
     bool nr = needsRestore(src);
     Dyninst::Register temp;
     
     if(nr) {
         // this needs gen because it uses emitV...
-        temp = gen.rs()->allocateRegister(gen, noCost);
+        temp = gen.rs()->allocateRegister(gen);
         
         // Emit code to restore the original ra register value in temp.
         // The offset compensates for the gap 0, 3, 4, ...
@@ -1360,7 +1358,7 @@ static inline void emitAddOriginal(Dyninst::Register src, Dyninst::Register acc,
     
     // add temp to dest;
     // writes at gen+base and updates base, we must update insn...
-    emitV(plusOp, temp, acc, acc, gen, noCost, 0);
+    emitV(plusOp, temp, acc, acc, gen, 0);
     
     if(nr)
         gen.rs()->freeRegister(temp);
@@ -1369,8 +1367,7 @@ static inline void emitAddOriginal(Dyninst::Register src, Dyninst::Register acc,
 // VG(11/07/01): Load in destination the effective address given
 // by the address descriptor. Used for memory access stuff.
 void emitASload(const BPatch_addrSpec_NP *as, Dyninst::Register dest, int stackShift,
-		codeGen &gen,
-		bool noCost)
+		codeGen &gen)
 {
   // Haven't implemented non-zero shifts yet
   assert(stackShift == 0);
@@ -1383,28 +1380,27 @@ void emitASload(const BPatch_addrSpec_NP *as, Dyninst::Register dest, int stackS
 
   // emit code to load the immediate (constant offset) into dest; this
   // writes at gen+base and updates base, we must update insn...
-  emitVload(loadConstOp, (Address)imm, dest, dest, gen, noCost);
+  emitVload(loadConstOp, (Address)imm, dest, dest, gen);
   
   // If ra is used in the address spec, allocate a temp register and
   // get the value of ra from stack into it
   if(ra > -1)
-      emitAddOriginal(ra, dest, gen, noCost);
+      emitAddOriginal(ra, dest, gen);
 
   // If rb is used in the address spec, allocate a temp register and
   // get the value of ra from stack into it
   if(rb > -1)
-    emitAddOriginal(rb, dest, gen, noCost);
+    emitAddOriginal(rb, dest, gen);
 
 }
 
-void emitCSload(const BPatch_addrSpec_NP *as, Dyninst::Register dest, codeGen &gen,
-		bool noCost)
+void emitCSload(const BPatch_addrSpec_NP *as, Dyninst::Register dest, codeGen &gen)
 {
-  emitASload(as, dest, 0, gen, noCost);
+  emitASload(as, dest, 0, gen);
 }
 
 void emitVload(opCode op, Address src1, Dyninst::Register src2, Dyninst::Register dest,
-               codeGen &gen, bool /*noCost*/, 
+               codeGen &gen,
                registerSpace * /*rs*/, int size,
                const instPoint * /* location */, AddressSpace *proc)
 {
@@ -1463,7 +1459,7 @@ void emitVload(opCode op, Address src1, Dyninst::Register src2, Dyninst::Registe
     break;
   case loadRegRelativeAddr:
     gen.rs()->readProgramRegister(gen, src2, dest, size);
-    emitImm(plusOp, dest, src1, dest, gen, false);
+    emitImm(plusOp, dest, src1, dest, gen);
     break;
   case loadRegRelativeOp:
     gen.rs()->readProgramRegister(gen, src2, dest, size);
@@ -1488,13 +1484,13 @@ void emitVload(opCode op, Address src1, Dyninst::Register src2, Dyninst::Registe
 }
 
 void emitVstore(opCode op, Dyninst::Register src1, Dyninst::Register /*src2*/, Address dest,
-		codeGen &gen, bool noCost, 
+		codeGen &gen,
                 registerSpace * /* rs */, int size,
                 const instPoint * /* location */, AddressSpace *proc)
 {
     if (op == storeOp) {
 	// temp register to hold base address for store (added 6/26/96 jkh)
-	Dyninst::Register temp = gen.rs()->getScratchRegister(gen, noCost);
+	Dyninst::Register temp = gen.rs()->getScratchRegister(gen);
 
         insnCodeGen::loadPartialImmIntoReg(gen, temp, (long)dest);
         if (size == 1)
@@ -1531,7 +1527,7 @@ void emitVstore(opCode op, Dyninst::Register src1, Dyninst::Register /*src2*/, A
 }
 
 void emitV(opCode op, Dyninst::Register src1, Dyninst::Register src2, Dyninst::Register dest,
-           codeGen &gen, bool /*noCost*/,
+           codeGen &gen,
            registerSpace * /*rs*/, int size,
            const instPoint * /* location */, AddressSpace *proc, bool s)
 {
@@ -1713,8 +1709,7 @@ void emitV(opCode op, Dyninst::Register src1, Dyninst::Register src2, Dyninst::R
 void emitLoadPreviousStackFrameRegister(Address register_num, 
                                         Dyninst::Register dest,
                                         codeGen &gen,
-                                        int /*size*/,
-                                        bool noCost)
+                                        int /*size*/)
 {
     // As of 10/24/2007, the size parameter is still incorrect.
     // Luckily, we know implicitly what size they actually want.
@@ -1735,9 +1730,9 @@ void emitLoadPreviousStackFrameRegister(Address register_num,
 
         // Get address (SP + offset) and stick in register dest.
         emitImm(plusOp ,(Dyninst::Register) REG_SP, (RegValue) offset, dest,
-                gen, noCost, gen.rs());
+                gen, gen.rs());
         // Load LR into register dest
-        emitV(loadIndirOp, dest, 0, dest, gen, noCost, gen.rs(),
+        emitV(loadIndirOp, dest, 0, dest, gen, gen.rs(),
               gen.width(), gen.point(), gen.addrSpace());
         break;
 
@@ -1750,9 +1745,9 @@ void emitLoadPreviousStackFrameRegister(Address register_num,
 
         // Get address (SP + offset) and stick in register dest.
         emitImm(plusOp ,(Dyninst::Register) REG_SP, (RegValue) offset, dest,
-                gen, noCost, gen.rs());
+                gen, gen.rs());
         // Load LR into register dest
-        emitV(loadIndirOp, dest, 0, dest, gen, noCost, gen.rs(),
+        emitV(loadIndirOp, dest, 0, dest, gen, gen.rs(),
               gen.width(), gen.point(), gen.addrSpace());
       break;
 
@@ -2140,12 +2135,12 @@ bool EmitterPOWER32Stat::emitCallInstruction(codeGen& gen, func_instance* callee
 }
 
 bool EmitterPOWER32Stat::emitPLTCommon(func_instance *callee, bool call, codeGen &gen) {
-  Dyninst::Register scratchReg = gen.rs()->getScratchRegister(gen, true);
+  Dyninst::Register scratchReg = gen.rs()->getScratchRegister(gen);
   if (scratchReg == Null_Register) return false;
 
   Dyninst::Register scratchLR = Null_Register;
   std::vector<Dyninst::Register> excluded; excluded.push_back(scratchReg);
-  scratchLR = gen.rs()->getScratchRegister(gen, excluded, true);
+  scratchLR = gen.rs()->getScratchRegister(gen, excluded);
   if (scratchLR == Null_Register) {
     if (scratchReg == registerSpace::r0) return false;
     // We can use r0 for this, since it's volatile. 
@@ -2205,12 +2200,12 @@ bool EmitterPOWER32Stat::emitTOCJump(block_instance *block, codeGen &gen) {
 
 
 bool EmitterPOWER32Stat::emitTOCCommon(block_instance *block, bool call, codeGen &gen) {
-  Dyninst::Register scratchReg = gen.rs()->getScratchRegister(gen, true);
+  Dyninst::Register scratchReg = gen.rs()->getScratchRegister(gen);
   if (scratchReg == Null_Register) return false;
 
   Dyninst::Register scratchLR = Null_Register;
   std::vector<Dyninst::Register> excluded; excluded.push_back(scratchReg);
-  scratchLR = gen.rs()->getScratchRegister(gen, excluded, true);
+  scratchLR = gen.rs()->getScratchRegister(gen, excluded);
   if (scratchLR == Null_Register) {
     if (scratchReg == registerSpace::r0) return false;
     // We can use r0 for this, since it's volatile. 
@@ -2498,7 +2493,7 @@ bool EmitterPOWER::emitCallInstruction(codeGen &gen, func_instance *callee, bool
         // Use scratchReg to set destination of the call...
         inst_printf("[EmitterPOWER::EmitCallInstruction] needLongBranch, Emitting VLOAD  Callee: 0x%lx, ScratchReg: %u\n",
                     callee->addr(), (unsigned) scratchReg);
-        emitVload(loadConstOp, callee->addr(), scratchReg, scratchReg, gen, false);
+        emitVload(loadConstOp, callee->addr(), scratchReg, scratchReg, gen);
         insnCodeGen::generateMoveToLR(gen, scratchReg);
 
         inst_printf("Generated LR value in %d\n", scratchReg);
@@ -2510,13 +2505,13 @@ bool EmitterPOWER::emitCallInstruction(codeGen &gen, func_instance *callee, bool
         inst_printf("[EmitterPOWER::EmitCallInstruction] Setting TOC anchor, toc_anchor: %lx, register: 2(fixed)\n",
                     (uint64_t)toc_anchor);
         // Set up the new TOC value
-        emitVload(loadConstOp, toc_anchor, 2, 2, gen, false);
+        emitVload(loadConstOp, toc_anchor, 2, 2, gen);
         inst_printf("Set new TOC\n");
     }
 
     // ALL dynamic; call instruction generation
     if (needLongBranch) {
-        emitVload(loadConstOp, callee->addr(), 12, 12, gen, false);
+        emitVload(loadConstOp, callee->addr(), 12, 12, gen);
         instruction brl(BRLraw);
         insnCodeGen::generate(gen,brl);
         inst_printf("Generated BRL\n");
@@ -2524,7 +2519,7 @@ bool EmitterPOWER::emitCallInstruction(codeGen &gen, func_instance *callee, bool
     else {
         inst_printf("[EmitterPOWER::EmitCallInstruction] Generating Call, curAddress: %lx, calleeAddr: %lx\n",
                      gen.currAddr(), callee->addr());
-        emitVload(loadConstOp, callee->addr(), 12, 12, gen, false);
+        emitVload(loadConstOp, callee->addr(), 12, 12, gen);
         insnCodeGen::generateCall(gen, gen.currAddr(), callee->addr());
 
         inst_printf("Generated short call from 0x%lx to 0x%lx\n",
@@ -2554,7 +2549,7 @@ void EmitterPOWER::emitLoadShared(opCode op, Dyninst::Register dest, const image
 
    inst_printf("emitLoadShared addr 0x%lx curr adress 0x%lx offset %lu 0x%lx size %d\n", 
    	addr, gen.currAddr(), addr - gen.currAddr()+4, addr - gen.currAddr()+4, size);
-   Dyninst::Register scratchReg = gen.rs()->getScratchRegister(gen, true);
+   Dyninst::Register scratchReg = gen.rs()->getScratchRegister(gen);
 
    if (scratchReg == Null_Register) {
    	std::vector<Dyninst::Register> freeReg;
@@ -2615,7 +2610,7 @@ void EmitterPOWER::emitStoreShared(Dyninst::Register source, const image_variabl
    		addr, gen.currAddr(), addr - gen.currAddr()+4, addr - gen.currAddr()+4, size);
 
    // load register with address from jump slot
-   Dyninst::Register scratchReg = gen.rs()->getScratchRegister(gen, true);
+   Dyninst::Register scratchReg = gen.rs()->getScratchRegister(gen);
    if (scratchReg == Null_Register) {
    	std::vector<Dyninst::Register> freeReg;
         std::vector<Dyninst::Register> excludeReg;
@@ -2633,7 +2628,7 @@ void EmitterPOWER::emitStoreShared(Dyninst::Register source, const image_variabl
    if(!is_local) {
         std::vector<Dyninst::Register> exclude;
         exclude.push_back(scratchReg);
-   	Dyninst::Register scratchReg1 = gen.rs()->getScratchRegister(gen, exclude, true);
+   	Dyninst::Register scratchReg1 = gen.rs()->getScratchRegister(gen, exclude);
    	if (scratchReg1 == Null_Register) {
    		std::vector<Dyninst::Register> freeReg;
         	std::vector<Dyninst::Register> excludeReg;

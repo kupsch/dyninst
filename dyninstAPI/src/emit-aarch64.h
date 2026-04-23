@@ -118,7 +118,7 @@ public:
 
     // This one we actually use now.
     virtual Register emitCall(opCode, codeGen &, const std::vector <Dyninst::DyninstAPI::codeGenASTPtr> &,
-                              bool, func_instance *);
+                              func_instance *);
 
     virtual void emitGetRetVal(Register, bool, codeGen &) { assert(0); }
 
@@ -147,9 +147,9 @@ public:
         return true;
     }
 
-    virtual void emitStoreImm(Address, int, codeGen &, bool) { assert(0); }
+    virtual void emitStoreImm(Address, int, codeGen &) { assert(0); }
 
-    virtual void emitAddSignedImm(Address, int, codeGen &, bool) { assert(0); }
+    virtual void emitAddSignedImm(Address, int, codeGen &) { assert(0); }
 
     virtual bool emitPush(codeGen &, Register) {
         assert(0);
@@ -175,7 +175,7 @@ protected:
     virtual bool emitCallInstruction(codeGen &, func_instance *,
                                      bool, Address);
 
-    virtual Register emitCallReplacement(opCode, codeGen &, bool,
+    virtual Register emitCallReplacement(opCode, codeGen &,
                                          func_instance *);
 
  private:
@@ -212,7 +212,7 @@ protected:
     virtual bool emitCallInstruction(codeGen &, func_instance *, bool,
                                      Address);
 
-    virtual Register emitCallReplacement(opCode, codeGen &, bool,
+    virtual Register emitCallReplacement(opCode, codeGen &,
                                          func_instance *) {
         assert(0 && "emitCallReplacement not implemented for binary rewriter");
     }

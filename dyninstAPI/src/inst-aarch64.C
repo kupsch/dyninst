@@ -179,7 +179,7 @@ unsigned EmitterAARCH64SaveRegs::saveSPRegisters(
 
     for(std::vector<registerSlot *>::iterator itr = spRegs.begin(); itr != spRegs.end(); itr++) {
         registerSlot *cur = *itr;
-        saveSPR(gen, theRegSpace->getScratchRegister(gen, true), regMap[cur], -4*GPRSIZE_32);
+        saveSPR(gen, theRegSpace->getScratchRegister(gen), regMap[cur], -4*GPRSIZE_32);
         theRegSpace->markSavedRegister(cur->number, offset);
 
         offset += 4*GPRSIZE_32;
@@ -276,7 +276,7 @@ unsigned EmitterAARCH64RestoreRegs::restoreSPRegisters(
 
     for(std::vector<registerSlot *>::iterator itr = spRegs.begin(); itr != spRegs.end(); itr++) {
         registerSlot *cur = *itr;
-        restoreSPR(gen, theRegSpace->getScratchRegister(gen, true), regMap[cur], 4*GPRSIZE_32);
+        restoreSPR(gen, theRegSpace->getScratchRegister(gen), regMap[cur], 4*GPRSIZE_32);
         ret++;
     }
 
@@ -350,7 +350,7 @@ void popStack(codeGen &gen)
 
 //TODO: 32-/64-bit regs?
 void emitImm(opCode op, Register src1, RegValue src2imm, Register dest, 
-        codeGen &gen, bool /*noCost*/, registerSpace * /* rs */, bool s)
+        codeGen &gen, registerSpace * /* rs */, bool s)
 {
     switch(op) {
         case plusOp:
@@ -395,8 +395,8 @@ void emitImm(opCode op, Register src1, RegValue src2imm, Register dest,
         case eqOp:
             {
                 Register scratch = gen.rs()->getScratchRegister(gen);
-                emitVload(loadConstOp, src2imm, 0, scratch, gen, true);
-                emitV(op, src1, scratch, dest, gen, true);
+                emitVload(loadConstOp, src2imm, 0, scratch, gen);
+                emitV(op, src1, scratch, dest, gen);
             }
             break;
         case neOp:
@@ -503,14 +503,13 @@ bool EmitterAARCH64::clobberAllFuncCall(registerSpace *rs,
 
 Register emitFuncCall(opCode op,
                       codeGen &gen,
-                      std::vector <codeGenASTPtr> &operands, bool noCost,
+                      std::vector <codeGenASTPtr> &operands,
                       func_instance *callee) {
-    return gen.emitter()->emitCall(op, gen, operands, noCost, callee);
+    return gen.emitter()->emitCall(op, gen, operands, callee);
 }
 
 Register EmitterAARCH64::emitCallReplacement(opCode,
                                              codeGen &,
-                                             bool,
                                              func_instance *) {
     assert(0); //Not implemented
     return 0;
@@ -524,7 +523,6 @@ Register EmitterAARCH64::emitCallReplacement(opCode,
 Register EmitterAARCH64::emitCall(opCode op,
                                   codeGen &gen,
                                   const std::vector<codeGenASTPtr> &operands,
-                                  bool,
                                   func_instance *callee) 
 {
     //#sasha This function implementation is experimental.
@@ -571,11 +569,11 @@ Register EmitterAARCH64::emitCall(opCode op,
     for(size_t id = 0; id < operands.size(); id++)
     {
         Register reg = Null_Register;
-        if (gen.rs()->allocateSpecificRegister(gen, registerSpace::r0 + id, true))
+        if (gen.rs()->allocateSpecificRegister(gen, registerSpace::r0 + id))
             reg = registerSpace::r0 + id;
 
         Address unnecessary = ADDR_NULL;
-        if (!operands[id]->generateCode_phase2(gen, false, unnecessary, reg))
+        if (!operands[id]->generateCode_phase2(gen, unnecessary, reg))
             assert(0);
         assert(reg!=Null_Register);
     }
@@ -640,7 +638,7 @@ Register EmitterAARCH64::emitCall(opCode op,
 
 
 codeBufIndex_t emitA(opCode op, Register src1, Register, long dest,
-        codeGen &gen, Dyninst::DyninstAPI::RegControl rc, bool)
+        codeGen &gen, Dyninst::DyninstAPI::RegControl rc)
 {
     codeBufIndex_t retval = 0;
 
@@ -667,7 +665,7 @@ codeBufIndex_t emitA(opCode op, Register src1, Register, long dest,
 }
 
 Register emitR(opCode op, Register src1, Register src2, Register dest,
-               codeGen &gen, bool /*noCost*/,
+               codeGen &gen,
                const instPoint *, bool /*for_MT*/)
 {
     registerSlot *regSlot = NULL;
@@ -775,8 +773,7 @@ void MovePCToReg(Register dest, codeGen &gen) {
 // Yuhan(02/04/19): Load in destination the effective address given
 // by the address descriptor. Used for memory access stuff.
 void emitASload(const BPatch_addrSpec_NP *as, Register dest, int stackShift,
-                codeGen &gen,
-                bool) {
+                codeGen &gen) {
 
     // Haven't implemented non-zero shifts yet
     assert(stackShift == 0);
@@ -815,13 +812,12 @@ void emitASload(const BPatch_addrSpec_NP *as, Register dest, int stackShift,
         insnCodeGen::generateAddSubImmediate(gen, insnCodeGen::Add, 0, imm, dest, dest, true);	
 }
 
-void emitCSload(const BPatch_addrSpec_NP *, Register, codeGen &,
-                bool) {
+void emitCSload(const BPatch_addrSpec_NP *, Register, codeGen &) {
     assert(0); //Not implemented
 }
 
 void emitVload(opCode op, Address src1, Register src2, Register dest,
-               codeGen &gen, bool /*noCost*/,
+               codeGen &gen,
                registerSpace * /*rs*/, int size,
                const instPoint * /* location */, AddressSpace *)
 {
@@ -860,7 +856,7 @@ void emitVload(opCode op, Address src1, Register src2, Register dest,
 }
 
 void emitVstore(opCode op, Register src1, Register /*src2*/, Address dest,
-        codeGen &gen, bool,
+        codeGen &gen,
         registerSpace * /* rs */, int size,
         const instPoint * /* location */, AddressSpace *)
 {
@@ -877,7 +873,7 @@ void emitVstore(opCode op, Register src1, Register /*src2*/, Address dest,
 }
 
 void emitV(opCode op, Register src1, Register src2, Register dest,
-        codeGen &gen, bool /*noCost*/,
+        codeGen &gen,
            registerSpace * /*rs*/, int size,
            const instPoint * /* location */, AddressSpace *proc, bool s) 
 {
@@ -921,8 +917,7 @@ void emitV(opCode op, Register src1, Register src2, Register dest,
 void emitLoadPreviousStackFrameRegister(Address register_num,
                                         Register dest,
                                         codeGen &gen,
-                                        int /*size*/,
-                                        bool)
+                                        int /*size*/)
 {
     gen.codeEmitter()->emitLoadOrigRegister(register_num, dest, gen);
 }
@@ -1032,7 +1027,7 @@ bool EmitterAARCH64Stat::emitPLTCall(func_instance *callee, codeGen &gen) {
     Address dest = getInterModuleFuncAddr(callee, gen);
     long varOffset = dest - gen.currAddr();
 
-    Register baseReg = gen.rs()->getScratchRegister(gen, true);
+    Register baseReg = gen.rs()->getScratchRegister(gen);
     assert(baseReg != Null_Register && "cannot get a scratch register");
     emitMovePCToReg(baseReg, gen);
 
@@ -1068,7 +1063,7 @@ bool EmitterAARCH64Stat::emitPLTJump(func_instance *callee, codeGen &gen) {
     Address dest = getInterModuleFuncAddr(callee, gen);
     long varOffset = dest - gen.currAddr();
 
-    Register baseReg = gen.rs()->getScratchRegister(gen, true);
+    Register baseReg = gen.rs()->getScratchRegister(gen);
     assert(baseReg != Null_Register && "cannot get a scratch register");
     emitMovePCToReg(baseReg, gen);
 
@@ -1149,7 +1144,7 @@ void EmitterAARCH64::emitLoadShared(opCode op, Register dest, const image_variab
     }
 
     // load register with address from jump slot
-    Register baseReg = gen.rs()->getScratchRegister(gen, true);
+    Register baseReg = gen.rs()->getScratchRegister(gen);
     assert(baseReg != Null_Register && "cannot get a scratch register");
 
     emitMovePCToReg(baseReg, gen);
@@ -1197,7 +1192,7 @@ void EmitterAARCH64::emitStoreShared(Register source, const image_variable *var,
     }
 
     // load register with address from jump slot
-    Register baseReg = gen.rs()->getScratchRegister(gen, true);
+    Register baseReg = gen.rs()->getScratchRegister(gen);
     assert(baseReg != Null_Register && "cannot get a scratch register");
 
     emitMovePCToReg(baseReg, gen);
@@ -1206,7 +1201,7 @@ void EmitterAARCH64::emitStoreShared(Register source, const image_variable *var,
     if(!is_local) {
         std::vector<Register> exclude;
         exclude.push_back(baseReg);
-        Register scratchReg1 = gen.rs()->getScratchRegister(gen, exclude, true);
+        Register scratchReg1 = gen.rs()->getScratchRegister(gen, exclude);
         assert(scratchReg1 != Null_Register && "cannot get a scratch register");
         emitLoadRelative(scratchReg1, varOffset, baseReg, gen.width(), gen);
         emitStoreRelative(source, 0, scratchReg1, size, gen);

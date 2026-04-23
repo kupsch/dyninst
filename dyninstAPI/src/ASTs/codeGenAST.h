@@ -86,17 +86,17 @@ public:
 
   virtual ~codeGenAST() = default;
 
-  virtual bool generateCode(codeGen &gen, bool noCost, Dyninst::Address &retAddr,
+  virtual bool generateCode(codeGen &gen, Dyninst::Address &retAddr,
                             Dyninst::Register &retReg);
 
-  virtual bool generateCode(codeGen &gen, bool noCost);
+  virtual bool generateCode(codeGen &gen);
 
-  virtual bool generateCode(codeGen &gen, bool noCost, Dyninst::Register &retReg) {
+  virtual bool generateCode(codeGen &gen, Dyninst::Register &retReg) {
     Dyninst::Address unused = Dyninst::ADDR_NULL;
-    return generateCode(gen, noCost, unused, retReg);
+    return generateCode(gen, unused, retReg);
   }
 
-  virtual bool generateCode_phase2(codeGen &gen, bool noCost, Dyninst::Address &retAddr,
+  virtual bool generateCode_phase2(codeGen &gen, Dyninst::Address &retAddr,
                                    Dyninst::Register &retReg) = 0;
 
   // Perform whatever pre-processing steps are necessary.
@@ -160,7 +160,7 @@ public:
 
   // Allocate a register and make it available for sharing if our
   // node is shared
-  Dyninst::Register allocateAndKeep(codeGen &gen, bool noCost);
+  Dyninst::Register allocateAndKeep(codeGen &gen);
 
   // Return all children of this node ([lre]operand, ..., operands[])
   std::vector<codeGenASTPtr> const &getChildren() const {
@@ -180,12 +180,12 @@ public:
     return NULL;
   }
 
-  virtual void emitVariableStore(opCode, Dyninst::Register, Dyninst::Register, codeGen &, bool,
+  virtual void emitVariableStore(opCode, Dyninst::Register, Dyninst::Register, codeGen &,
                                  registerSpace *, int, const instPoint *, AddressSpace *) {
     assert(!"Never call this on anything but an operand");
   }
 
-  virtual void emitVariableLoad(opCode, Dyninst::Register, Dyninst::Register, codeGen &, bool,
+  virtual void emitVariableLoad(opCode, Dyninst::Register, Dyninst::Register, codeGen &,
                                 registerSpace *, int, const instPoint *, AddressSpace *) {
     assert(!"Never call this on anything but an operand");
   }

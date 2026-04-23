@@ -117,10 +117,10 @@ public:
   bool initRegisters(codeGen &gen) override;
 
 private:
-  bool generateCode_phase2(codeGen &gen, bool noCost, Dyninst::Address &retAddr,
+  bool generateCode_phase2(codeGen &gen, Dyninst::Address &retAddr,
                            Dyninst::Register &retReg) override;
 
-  bool generateOptimizedAssignment(codeGen &gen, int size, bool noCost);
+  bool generateOptimizedAssignment(codeGen &gen, int size);
 
   opCode op{};
   codeGenASTPtr loperand{};

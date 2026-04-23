@@ -73,10 +73,10 @@ void codeGenAST::cleanUseCount() {
 
 // Allocate a register and make it available for sharing if our
 // node is shared
-Dyninst::Register codeGenAST::allocateAndKeep(codeGen &gen, bool noCost) {
+Dyninst::Register codeGenAST::allocateAndKeep(codeGen &gen) {
   ast_printf("Allocating register for node %p, useCount %d\n", (void *)this, useCount);
   // Allocate a register
-  Dyninst::Register dest = gen.rs()->allocateRegister(gen, noCost);
+  Dyninst::Register dest = gen.rs()->allocateRegister(gen);
 
   ast_printf("Allocator returned %u\n", dest.getId());
   assert(dest != Dyninst::Null_Register);
@@ -115,7 +115,7 @@ Dyninst::Register codeGenAST::allocateAndKeep(codeGen &gen, bool noCost) {
 // currently available. In order to fix this problem, we will need to
 // implement a "virtual" register allocator - naim 11/06/96
 //
-bool codeGenAST::generateCode(codeGen &gen, bool noCost, Address &retAddr, Dyninst::Register &retReg) {
+bool codeGenAST::generateCode(codeGen &gen, Address &retAddr, Dyninst::Register &retReg) {
   static bool entered = false;
 
   bool ret = true;
@@ -146,7 +146,7 @@ bool codeGenAST::generateCode(codeGen &gen, bool noCost, Address &retAddr, Dynin
   }
 
   // note: this could return the value "(Address)(-1)" -- csserra
-  if(!generateCode_phase2(gen, noCost, retAddr, retReg)) {
+  if(!generateCode_phase2(gen, retAddr, retReg)) {
     fprintf(stderr, "WARNING: failed in generateCode internals!\n");
     ret = false;
   }
@@ -162,10 +162,10 @@ bool codeGenAST::generateCode(codeGen &gen, bool noCost, Address &retAddr, Dynin
   return ret;
 }
 
-bool codeGenAST::generateCode(codeGen &gen, bool noCost) {
+bool codeGenAST::generateCode(codeGen &gen) {
   Address unused = ADDR_NULL;
   Dyninst::Register unusedReg = Dyninst::Null_Register;
-  bool ret = generateCode(gen, noCost, unused, unusedReg);
+  bool ret = generateCode(gen, unused, unusedReg);
   gen.rs()->freeRegister(unusedReg);
 
   return ret;
@@ -225,7 +225,7 @@ bool codeGenAST::generate(Point *point, Buffer &buffer) {
   gen.setPoint(ip);
   gen.setRegisterSpace(registerSpace::actualRegSpace(ip));
   gen.setAddrSpace(ip->proc());
-  if(!generateCode(gen, false)) {
+  if(!generateCode(gen)) {
     return false;
   }
 

@@ -45,7 +45,7 @@ namespace Dyninst { namespace DyninstAPI {
     return true;
   }
 
-  void EmitterIA32::emitAddSignedImm(Address addr, int imm, codeGen &gen, bool /*noCost*/) {
+  void EmitterIA32::emitAddSignedImm(Address addr, int imm, codeGen &gen) {
     x86::emitAddMem(addr, imm, gen);
   }
 
@@ -382,7 +382,7 @@ namespace Dyninst { namespace DyninstAPI {
   }
 
   Dyninst::Register EmitterIA32::emitCall(opCode op, codeGen &gen,
-                                          const std::vector<codeGenASTPtr> &operands, bool noCost,
+                                          const std::vector<codeGenASTPtr> &operands,
                                           func_instance *callee) {
     bool inInstrumentation = true;
     if(op != callOp) {
@@ -402,7 +402,7 @@ namespace Dyninst { namespace DyninstAPI {
       assert(0);
     }
 
-    param_size = emitCallParams(gen, operands, callee, saves, noCost);
+    param_size = emitCallParams(gen, operands, callee, saves);
 
     Dyninst::Register ret = REGNUM_EAX;
 
@@ -419,14 +419,14 @@ namespace Dyninst { namespace DyninstAPI {
 
   int EmitterIA32::emitCallParams(codeGen &gen, const std::vector<codeGenASTPtr> &operands,
                                   func_instance * /*target*/,
-                                  std::vector<Dyninst::Register> & /*extra_saves*/, bool noCost) {
+                                  std::vector<Dyninst::Register> & /*extra_saves*/) {
     std::vector<Dyninst::Register> srcs;
     unsigned frame_size = 0;
     unsigned u;
     for(u = 0; u < operands.size(); u++) {
       Address unused = ADDR_NULL;
       Dyninst::Register reg = Null_Register;
-      if(!operands[u]->generateCode_phase2(gen, noCost, unused, reg)) {
+      if(!operands[u]->generateCode_phase2(gen, unused, reg)) {
         assert(0);
       }
       assert(reg != Null_Register);
@@ -576,7 +576,7 @@ namespace Dyninst { namespace DyninstAPI {
   }
 
   void EmitterIA32::emitDiv(Register dest, Register src1, Register src2, codeGen &gen, bool s) {
-    Register scratch = gen.rs()->allocateRegister(gen, true);
+    Register scratch = gen.rs()->allocateRegister(gen);
     gen.rs()->loadVirtualToSpecific(src1, RealRegister(REGNUM_EAX), gen);
     gen.rs()->makeRegisterAvail(RealRegister(REGNUM_EDX), gen);
     gen.rs()->noteVirtualInReal(scratch, RealRegister(REGNUM_EDX));
@@ -615,7 +615,7 @@ namespace Dyninst { namespace DyninstAPI {
       }
 
     } else {
-      Register src2 = gen.rs()->allocateRegister(gen, true);
+      Register src2 = gen.rs()->allocateRegister(gen);
       emitLoadConst(src2, src2imm, gen);
       emitDiv(dest, src1, src2, gen, s);
       gen.rs()->freeRegister(src2);
@@ -785,7 +785,7 @@ namespace Dyninst { namespace DyninstAPI {
 
   void EmitterIA32::emitLoadOrigFrameRelative(Register dest, Address offset, codeGen &gen) {
     if(gen.bt()->createdFrame) {
-      Register scratch = gen.rs()->allocateRegister(gen, true);
+      Register scratch = gen.rs()->allocateRegister(gen);
       RealRegister scratch_r = gen.rs()->loadVirtualForWrite(scratch, gen);
       RealRegister dest_r = gen.rs()->loadVirtualForWrite(dest, gen);
       emitMovRMToReg(scratch_r, RealRegister(REGNUM_EBP), 0, gen);
@@ -910,7 +910,7 @@ namespace Dyninst { namespace DyninstAPI {
     RealRegister src1_r = gen.rs()->loadVirtual(src1, gen);
     RealRegister src2_r = gen.rs()->loadVirtual(src2, gen);
     RealRegister dest_r = gen.rs()->loadVirtualForWrite(dest, gen);
-    Register scratch = gen.rs()->allocateRegister(gen, true);
+    Register scratch = gen.rs()->allocateRegister(gen);
     RealRegister scratch_r = gen.rs()->loadVirtualForWrite(scratch, gen);
 
     emitOpRegReg(XOR_R32_RM32, dest_r, dest_r, gen); // XOR dest,dest
@@ -928,7 +928,7 @@ namespace Dyninst { namespace DyninstAPI {
   void EmitterIA32::emitRelOpImm(unsigned op, Register dest, Register src1, RegValue src2imm,
                                  codeGen &gen, bool s) {
 
-    Register src2 = gen.rs()->allocateRegister(gen, true);
+    Register src2 = gen.rs()->allocateRegister(gen);
     emitLoadConst(src2, src2imm, gen);
     emitRelOp(op, dest, src1, src2, gen, s);
     gen.rs()->freeRegister(src2);
@@ -1038,7 +1038,7 @@ namespace Dyninst { namespace DyninstAPI {
     emitMovRegToRM(RealRegister(REGNUM_EBP), offset, src_r, gen);
   }
 
-  void EmitterIA32::emitStoreImm(Address addr, int imm, codeGen &gen, bool /*noCost*/) {
+  void EmitterIA32::emitStoreImm(Address addr, int imm, codeGen &gen) {
     emitMovImmToMem(addr, imm, gen);
   }
 
@@ -1069,7 +1069,7 @@ namespace Dyninst { namespace DyninstAPI {
     }
 
     // temporary virtual register for storing destination address
-    Register dest = gen.rs()->allocateRegister(gen, false);
+    Register dest = gen.rs()->allocateRegister(gen);
     RealRegister dest_r = gen.rs()->loadVirtualForWrite(dest, gen);
     emitMovPCRMToReg(dest_r, addr - gen.currAddr(), gen, !is_local);
     emitStoreIndir(dest, source, 4, gen);

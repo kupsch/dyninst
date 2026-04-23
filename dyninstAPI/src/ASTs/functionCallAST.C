@@ -49,7 +49,7 @@ bool functionCallAST::initRegisters(codeGen &gen) {
   return ret;
 }
 
-bool functionCallAST::generateCode_phase2(codeGen &gen, bool noCost, Address &,
+bool functionCallAST::generateCode_phase2(codeGen &gen, Address &,
                                       Dyninst::Register &retReg) {
   // We call this anyway... not that we'll ever be kept.
   // Well... if we can somehow know a function is entirely
@@ -76,9 +76,9 @@ bool functionCallAST::generateCode_phase2(codeGen &gen, bool noCost, Address &,
   Dyninst::Register tmp = 0;
 
   if(use_func && !callReplace_) {
-    tmp = emitFuncCall(callOp, gen, children, noCost, use_func);
+    tmp = emitFuncCall(callOp, gen, children, use_func);
   } else if(use_func && callReplace_) {
-    tmp = emitFuncCall(funcJumpOp, gen, children, noCost, use_func);
+    tmp = emitFuncCall(funcJumpOp, gen, children, use_func);
   } else {
     char msg[256];
     sprintf(msg, "%s[%d]:  internal error:  unable to find %s", __FILE__, __LINE__,
@@ -105,7 +105,7 @@ bool functionCallAST::generateCode_phase2(codeGen &gen, bool noCost, Address &,
       gen.tracker()->addKeptRegister(gen, this, retReg);
     }
   } else if(retReg != tmp) {
-    emitImm(orOp, tmp, 0, retReg, gen, noCost, gen.rs());
+    emitImm(orOp, tmp, 0, retReg, gen, gen.rs());
     gen.rs()->freeRegister(tmp);
   }
   decUseCount(gen);

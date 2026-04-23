@@ -96,8 +96,8 @@ class registerSpace {
                               unsigned size);
 
 
-    Dyninst::Register allocateRegister(codeGen &gen, bool noCost, bool realReg = false);
-    bool allocateSpecificRegister(codeGen &gen, Dyninst::Register r, bool noCost = true);
+    Dyninst::Register allocateRegister(codeGen &gen, bool realReg = false);
+    bool allocateSpecificRegister(codeGen &gen, Dyninst::Register r);
 
     bool canAllocate(Dyninst::Register reg) const;
     Dyninst::Register allocateGprBlock(Dyninst::RegKind regKind, uint32_t numRegs, Dyninst::Alignment alignment);
@@ -106,10 +106,10 @@ class registerSpace {
 
     // Like allocate, but don't keep it around; if someone else tries to
     // allocate they might get this one.
-    Dyninst::Register getScratchRegister(codeGen &gen, bool noCost = true, bool realReg = false);
+    Dyninst::Register getScratchRegister(codeGen &gen, bool realReg = false);
     // Like the above, but excluding a set of registers (that we don't want
     // to touch)
-    Dyninst::Register getScratchRegister(codeGen &gen, std::vector<Dyninst::Register> &excluded, bool noCost = true, bool realReg = false);
+    Dyninst::Register getScratchRegister(codeGen &gen, std::vector<Dyninst::Register> &excluded, bool realReg = false);
 
     // For now, we save registers elsewhere and mark them here.
     bool markSavedRegister(Dyninst::Register num, int offsetFromFP);
@@ -244,7 +244,7 @@ class registerSpace {
     registerSlot *findRegister(Dyninst::Register reg);
     registerSlot *findRegister(RealRegister reg);
 
-    bool stealRegister(Dyninst::Register reg, codeGen &gen, bool noCost);
+    bool stealRegister(Dyninst::Register reg, codeGen &gen);
 
     bool markSavedRegister(registerSlot *num, int offsetFromFP);
 
@@ -329,6 +329,6 @@ class registerSpace {
 };
 
 void emitLoadPreviousStackFrameRegister(Dyninst::Address register_num, Dyninst::Register dest,
-                                        codeGen &gen, int size, bool noCost);
+                                        codeGen &gen, int size);
 
 #endif

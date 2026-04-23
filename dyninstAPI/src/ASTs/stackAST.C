@@ -8,15 +8,15 @@
 
 namespace Dyninst { namespace DyninstAPI {
 
-bool stackAST::allocateCanaryRegister(codeGen &gen, bool noCost, Dyninst::Register &reg,
-                                          bool &needSaveAndRestore) {
+bool stackAST::allocateCanaryRegister(codeGen &gen, Dyninst::Register &reg,
+                                      bool &needSaveAndRestore) {
   // Let's see if we can find a dead register to use!
   instPoint *point = gen.point();
 
   // Try to get a scratch register from the register space
   registerSpace *regSpace = registerSpace::actualRegSpace(point);
   bool realReg = true;
-  Dyninst::Register tmpReg = regSpace->getScratchRegister(gen, noCost, realReg);
+  Dyninst::Register tmpReg = regSpace->getScratchRegister(gen, realReg);
   if(tmpReg != Dyninst::Null_Register) {
     reg = tmpReg;
     needSaveAndRestore = false;
@@ -28,10 +28,10 @@ bool stackAST::allocateCanaryRegister(codeGen &gen, bool noCost, Dyninst::Regist
 
   // Couldn't find a dead register to use :-(
   registerSpace *deadRegSpace = registerSpace::optimisticRegSpace(gen.addrSpace());
-  reg = deadRegSpace->getScratchRegister(gen, noCost, realReg);
+  reg = deadRegSpace->getScratchRegister(gen, realReg);
   if(reg == Dyninst::Null_Register) {
     ast_printf("WARNING: using default allocateAndKeep in allocateCanaryRegister\n");
-    reg = allocateAndKeep(gen, noCost);
+    reg = allocateAndKeep(gen);
   }
   needSaveAndRestore = true;
   ast_printf("allocateCanaryRegister will require save&restore at 0x%lx\n", gen.point()->addr());

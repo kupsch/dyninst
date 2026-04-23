@@ -493,7 +493,7 @@ void emitMovPCRMToReg(RealRegister dest, int offset, codeGen &gen, bool deref_re
          pc_reg = dest;
       }
       else {
-         gen.rs()->pc_rel_reg = gen.rs()->allocateRegister(gen, true);
+         gen.rs()->pc_rel_reg = gen.rs()->allocateRegister(gen);
          pc_reg = gen.rs()->loadVirtualForWrite(gen.rs()->pc_rel_reg, gen);
       }
       gen.rs()->pc_rel_offset() = used + 5;
@@ -744,10 +744,9 @@ unsigned char jccOpcodeFromRelOp(unsigned op, bool s)
 Dyninst::Register emitFuncCall(opCode op,
                       codeGen &gen,
                       std::vector<codeGenASTPtr> &operands, 
-                      bool noCost,
                       func_instance *callee)
 {
-    Dyninst::Register reg = gen.codeEmitter()->emitCall(op, gen, operands, noCost, callee);
+    Dyninst::Register reg = gen.codeEmitter()->emitCall(op, gen, operands, callee);
     return reg;
 }
 
@@ -758,7 +757,7 @@ Dyninst::Register emitFuncCall(opCode op,
  */
 
 codeBufIndex_t emitA(opCode op, Dyninst::Register src1, Dyninst::Register /*src2*/, long dest,
-                     codeGen &gen, Dyninst::DyninstAPI::RegControl rc, bool /*noCost*/)
+                     codeGen &gen, Dyninst::DyninstAPI::RegControl rc)
 {
    // retval is the address of the jump (if one is created). 
    // It's always the _start_ of the jump, which means that if we need
@@ -789,7 +788,7 @@ codeBufIndex_t emitA(opCode op, Dyninst::Register src1, Dyninst::Register /*src2
 }
 
 Dyninst::Register emitR(opCode op, Dyninst::Register src1, Dyninst::Register src2, Dyninst::Register dest,
-               codeGen &gen, bool noCost,
+               codeGen &gen,
                const instPoint *location, bool /*for_multithreaded*/)
 {
    bool get_addr_of = (src2 != Null_Register);
@@ -824,7 +823,7 @@ Dyninst::Register emitR(opCode op, Dyninst::Register src1, Dyninst::Register src
           abort();                  // unexpected op for this emit!
     }
     assert(get_addr_of);
-    emitV(storeIndirOp, src2, 0, dest, gen, noCost, gen.rs(), 
+    emitV(storeIndirOp, src2, 0, dest, gen, gen.rs(),
           gen.addrSpace()->getAddressWidth(), gen.point(), gen.addrSpace());
     return(dest);
 }
@@ -951,7 +950,7 @@ Dyninst::Register restoreGPRtoReg(RealRegister reg, codeGen &gen, RealRegister *
          dest = gen.rs()->getScratchRegister(gen);
       }
       else {
-         dest = gen.rs()->getScratchRegister(gen, false, true);
+         dest = gen.rs()->getScratchRegister(gen, true);
       }
    }
    
@@ -1016,7 +1015,7 @@ void restoreGPRtoGPR(RealRegister src, RealRegister dest, codeGen &gen)
 
 // VG(11/07/01): Load in destination the effective address given
 // by the address descriptor. Used for memory access stuff.
-void emitASload(const BPatch_addrSpec_NP *as, Dyninst::Register dest, int stackShift, codeGen &gen, bool /* noCost */)
+void emitASload(const BPatch_addrSpec_NP *as, Dyninst::Register dest, int stackShift, codeGen &gen)
 {
     // TODO 16-bit registers, rep hacks
     long imm = as->getImm();
@@ -1030,7 +1029,7 @@ void emitASload(const BPatch_addrSpec_NP *as, Dyninst::Register dest, int stackS
 
 
 void emitCSload(const BPatch_countSpec_NP *as, Dyninst::Register dest,
-		codeGen &gen, bool /* noCost */ )
+		codeGen &gen)
 {
    // VG(7/30/02): different from ASload on this platform, no LEA business
 
@@ -1043,7 +1042,7 @@ void emitCSload(const BPatch_countSpec_NP *as, Dyninst::Register dest,
 }
 
 void emitVload(opCode op, Address src1, Dyninst::Register src2, Dyninst::Register dest,
-               codeGen &gen, bool /*noCost*/, 
+               codeGen &gen,
                registerSpace * /*rs*/, int size,
                const instPoint * /* location */, AddressSpace * /* proc */)
 {
@@ -1085,7 +1084,7 @@ void emitVload(opCode op, Address src1, Dyninst::Register src2, Dyninst::Registe
 }
 
 void emitVstore(opCode op, Dyninst::Register src1, Dyninst::Register src2, Address dest,
-                codeGen &gen, bool /*noCost*/, registerSpace * /*rs*/, 
+                codeGen &gen, registerSpace * /*rs*/,
                 int size,
                 const instPoint * /* location */, AddressSpace * /* proc */)
 {
@@ -1108,7 +1107,7 @@ void emitVstore(opCode op, Dyninst::Register src1, Dyninst::Register src2, Addre
 }
 
 void emitV(opCode op, Dyninst::Register src1, Dyninst::Register src2, Dyninst::Register dest,
-           codeGen &gen, bool /*noCost*/, 
+           codeGen &gen,
            registerSpace * /*rs*/, int size,
            const instPoint * /* location */, AddressSpace * /* proc */, bool s)
 {
@@ -1198,7 +1197,7 @@ void emitV(opCode op, Dyninst::Register src1, Dyninst::Register src2, Dyninst::R
 }
 
 void emitImm(opCode op, Dyninst::Register src1, RegValue src2imm, Dyninst::Register dest,
-             codeGen &gen, bool, registerSpace *, bool s)
+             codeGen &gen, registerSpace *, bool s)
 {
    if (op ==  storeOp) {
        // this doesn't seem to ever be called from ast.C (or anywhere) - gq
@@ -1290,8 +1289,7 @@ bool emitPop(RealRegister reg, codeGen &gen) {
 void emitLoadPreviousStackFrameRegister(Address register_num,
                                         Dyninst::Register dest,
                                         codeGen &gen,
-                                        int,
-                                        bool){
+                                        int){
     gen.codeEmitter()->emitLoadOrigRegister(register_num, dest, gen);
 }
 
@@ -1331,18 +1329,18 @@ bool writeFunctionPtr(AddressSpace *p, Address addr, func_instance *f)
    return p->writeDataSpace((void *) addr, sizeof(Address), &val_to_write);   
 }
 
-bool emitStoreConst(Address addr, int imm, codeGen &gen, bool noCost) {
-   gen.codeEmitter()->emitStoreImm(addr, imm, gen, noCost);
+bool emitStoreConst(Address addr, int imm, codeGen &gen) {
+   gen.codeEmitter()->emitStoreImm(addr, imm, gen);
    return true;
 }
 
-bool emitAddSignedImm(Address addr, long int imm, codeGen &gen, bool noCost) {
-   gen.codeEmitter()->emitAddSignedImm(addr, imm, gen, noCost);
+bool emitAddSignedImm(Address addr, long int imm, codeGen &gen) {
+   gen.codeEmitter()->emitAddSignedImm(addr, imm, gen);
    return true;
 }
 
-bool emitSubSignedImm(Address addr, long int imm, codeGen &gen, bool noCost) {
-   gen.codeEmitter()->emitAddSignedImm(addr, imm * -1, gen, noCost);
+bool emitSubSignedImm(Address addr, long int imm, codeGen &gen) {
+   gen.codeEmitter()->emitAddSignedImm(addr, imm * -1, gen);
    return true;
 }
 

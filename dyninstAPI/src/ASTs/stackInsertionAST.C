@@ -24,13 +24,13 @@ std::string stackInsertionAST::format(std::string indent) {
 
 #ifndef cap_stack_mods
 
-bool stackInsertionAST::generateCode_phase2(codeGen &, bool, Address &, Dyninst::Register &) {
+bool stackInsertionAST::generateCode_phase2(codeGen &, Address &, Dyninst::Register &) {
   return false;
 }
 
 #else
 
-bool stackInsertionAST::generateCode_phase2(codeGen &gen, bool noCost, Dyninst::Address &,
+bool stackInsertionAST::generateCode_phase2(codeGen &gen, Dyninst::Address &,
                                              Dyninst::Register &) {
   // Turn off default basetramp instrumentation saves & restores
   gen.setInsertNaked(true);
@@ -64,7 +64,7 @@ bool stackInsertionAST::generateCode_phase2(codeGen &gen, bool noCost, Dyninst::
     // 2. Ensures that the canary will get overwritten (rather than empty alignment space) in case
     // of an overflow
     if(gen.getArch() == Arch_x86_64) {
-      allocateCanaryRegister(gen, noCost, canaryReg, needSaveAndRestore);
+      allocateCanaryRegister(gen, canaryReg, needSaveAndRestore);
 
       int canarySize = 8;
       int off = AMD64_STACK_ALIGNMENT - canarySize; // canary

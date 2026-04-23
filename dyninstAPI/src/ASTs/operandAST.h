@@ -166,10 +166,10 @@ public:
   bool usesAppRegister() const override;
 
   void emitVariableStore(opCode op, Dyninst::Register src1, Dyninst::Register src2, codeGen &gen,
-                         bool noCost, registerSpace *rs, int size, const instPoint *point,
+                         registerSpace *rs, int size, const instPoint *point,
                          AddressSpace *as) override;
   void emitVariableLoad(opCode op, Dyninst::Register src2, Dyninst::Register dest, codeGen &gen,
-                        bool noCost, registerSpace *rs, int size, const instPoint *point,
+                        registerSpace *rs, int size, const instPoint *point,
                         AddressSpace *as) override;
 
   bool initRegisters(codeGen &gen) override;
@@ -195,7 +195,7 @@ public:
 #endif
 
 private:
-  bool generateCode_phase2(codeGen &gen, bool noCost, Dyninst::Address &retAddr,
+  bool generateCode_phase2(codeGen &gen, Dyninst::Address &retAddr,
                            Dyninst::Register &retReg) override;
   int_variable *lookUpVar(AddressSpace *as);
 

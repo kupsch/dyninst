@@ -21,7 +21,7 @@ std::string stackRemovalAST::format(std::string indent) {
 
 #ifndef cap_stack_mods
 
-bool stackRemovalAST::generateCode_phase2(codeGen &, bool, Address &, Dyninst::Register &) {
+bool stackRemovalAST::generateCode_phase2(codeGen &, Address &, Dyninst::Register &) {
   (void)func_;
   (void)canaryAfterPrologue_;
   (void)canaryHeight_;
@@ -35,7 +35,7 @@ bool stackRemovalAST::generateCode_phase2(codeGen &, bool, Address &, Dyninst::R
 #include "RegisterConversion.h"
 #include "registers/MachRegister.h"
 
-bool stackRemovalAST::generateCode_phase2(codeGen &gen, bool noCost, Address &,
+bool stackRemovalAST::generateCode_phase2(codeGen &gen, Address &,
                                              Dyninst::Register &) {
   // Turn off default basetramp instrumentation saves & restores
   gen.setInsertNaked(true);
@@ -61,7 +61,7 @@ bool stackRemovalAST::generateCode_phase2(codeGen &gen, bool noCost, Address &,
     Dyninst::Register canaryReg = Dyninst::Null_Register;
     bool needSaveAndRestore = true;
     if(gen.getArch() == Arch_x86_64) {
-      allocateCanaryRegister(gen, noCost, canaryReg, needSaveAndRestore);
+      allocateCanaryRegister(gen, canaryReg, needSaveAndRestore);
     } else {
       canaryReg = REGNUM_EDX;
       gen.rs()->noteVirtualInReal(canaryReg, RealRegister(canaryReg));
