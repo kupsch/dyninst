@@ -59,6 +59,8 @@ using codeGenASTPtr = Dyninst::DyninstAPI::codeGenASTPtr;
 using functionCallAST = Dyninst::DyninstAPI::functionCallAST;
 using operandAST = Dyninst::DyninstAPI::operandAST;
 
+namespace dapi = Dyninst::DyninstAPI;
+
 namespace {
 	// maximum number of addresses per outstanding printf!
 	const unsigned int _numaddrstrs=8;
@@ -1672,7 +1674,7 @@ bool PCProcess::inferiorMallocDynamic(int size, Address lo, Address hi) {
 }
 
 // A copy of the BPatch-level instrumentation installer
-void PCProcess::installInstrRequests(const std::vector<instMapping*> &requests) {
+void PCProcess::installInstrRequests(const std::vector<dapi::instMapping*> &requests) {
     if (requests.size() == 0) {
         return;
     }
@@ -1686,20 +1688,17 @@ void PCProcess::installInstrRequests(const std::vector<instMapping*> &requests) 
     for (unsigned lcv=0; lcv < requests.size(); lcv++) {
       inst_printf("%s[%d]: handling request %u of %lu\n", FILE__, __LINE__, lcv+1, requests.size());
 
-        instMapping *req = requests[lcv];
-        
-        if(!multithread_capable() && req->is_MTonly())
-            continue;
+        dapi::instMapping *req = requests[lcv];
         
         std::vector<func_instance *> matchingFuncs;
         
-        if (!findFuncsByAll(req->func, matchingFuncs, req->lib)) {
-            inst_printf("%s[%d]: failed to find any functions matching %s (lib %s), returning failure from installInstrRequests\n", FILE__, __LINE__, req->func.c_str(), req->lib.c_str());
+        if (!findFuncsByAll(req->func, matchingFuncs)) {
+            inst_printf("%s[%d]: failed to find any functions matching %s, returning failure from installInstrRequests\n", FILE__, __LINE__, req->func.c_str());
             return;
         }
         else {
-            inst_printf("%s[%d]: found %lu functions matching %s (lib %s), instrumenting...\n",
-                        FILE__, __LINE__, matchingFuncs.size(), req->func.c_str(), req->lib.c_str());
+            inst_printf("%s[%d]: found %lu functions matching %s, instrumenting...\n",
+                        FILE__, __LINE__, matchingFuncs.size(), req->func.c_str());
         }
 
         for (unsigned funcIter = 0; funcIter < matchingFuncs.size(); funcIter++) {
@@ -1756,9 +1755,7 @@ void PCProcess::installInstrRequests(const std::vector<instMapping*> &requests) 
 	   inst_printf("%s[%d]: found %lu points to instrument\n", FILE__, __LINE__, points.size());
            for (std::vector<Point *>::iterator iter = points.begin();
                 iter != points.end(); ++iter) {
-              Dyninst::PatchAPI::Instance::Ptr inst = (req->order == orderFirstAtPoint) ? 
-                 (*iter)->pushFront(ast) :
-                 (*iter)->pushBack(ast);
+              Dyninst::PatchAPI::Instance::Ptr inst = (*iter)->pushBack(ast);
               if (inst) {
                  if (!req->useTrampGuard) inst->disableRecursiveGuard();
                  req->instances.push_back(inst);

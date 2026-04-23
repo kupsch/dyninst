@@ -34,20 +34,12 @@
 #define INST_HDR
 
 #include "codeGenAST.h" // codeGenASTPtr
-#include <string>
 #include <map>
 #include <vector>
 #include <unordered_map>
 #include "dyn_register.h"
 #include "codegen.h" // codeBufIndex_t 
 #include "codegen/RegControl.h"
-
-namespace Dyninst {
-   namespace PatchAPI {
-      class Instance;
-      typedef boost::shared_ptr<Instance> InstancePtr;
-   }
-}
 
 /****************************************************************************/
 /****************************************************************************/
@@ -62,80 +54,11 @@ class registerSpace;
 class AddressSpace;
 class image_variable;
 
-typedef enum { callPreInsn, callPostInsn, callBranchTargetInsn, callUnset } callWhen;
-typedef enum { orderFirstAtPoint, orderLastAtPoint } callOrder;
-
 /* Utility functions */
 
 
 /* return the function asociated with a point. */
 func_instance *getFunction(instPoint *point);
-
-/*
- * struct to define a list of inst requests 
- *
- */
-#define FUNC_ENTRY      0x1             /* entry to the function */
-#define FUNC_EXIT       0x2             /* exit from function */
-#define FUNC_CALL       0x4             /* subroutines called from func */
-#define FUNC_ARG  	0x8             /* use arg as argument */
-
-// Container class for "instrument this point with this function". 
-// What I want to know is who is allergic to multi-letter arguments? Yeesh.
-class instMapping {
-
-   public:
-
-      instMapping(const std::string f, const std::string i, const int w, 
-            callWhen wn, callOrder o, Dyninst::DyninstAPI::codeGenASTPtr a = Dyninst::DyninstAPI::codeGenASTPtr(), std::string l = "")
-         : func(f), inst(i), lib(l),
-         where(w), when(wn), order(o), useTrampGuard(true),
-         mt_only(false), allow_trap(false) {
-            if (a != Dyninst::DyninstAPI::codeGenASTPtr()) args.push_back(a);
-         }
-
-      instMapping(const std::string f, const std::string i, const int w, 
-            Dyninst::DyninstAPI::codeGenASTPtr a = Dyninst::DyninstAPI::codeGenASTPtr(), std::string l = "")
-         : func(f), inst(i), lib(l),
-         where(w), when(callPreInsn), order(orderLastAtPoint),
-         useTrampGuard(true), mt_only(false), allow_trap(false) {
-            if (a != Dyninst::DyninstAPI::codeGenASTPtr()) args.push_back(a);
-         }
-
-      instMapping(const std::string f, const std::string i, const int w, 
-            std::vector<Dyninst::DyninstAPI::codeGenASTPtr> &aList, std::string l = "") :
-         func(f), inst(i), lib(l),
-         where(w), when(callPreInsn), order(orderLastAtPoint),
-         useTrampGuard(true), mt_only(false), allow_trap(false) {
-            for(unsigned u=0; u < aList.size(); u++) {
-               if (aList[u] != Dyninst::DyninstAPI::codeGenASTPtr()) args.push_back(aList[u]);
-            }
-         }
-
-      // Fork
-      instMapping(const instMapping *parMapping, AddressSpace *child);
-
-  ~instMapping() {
-  }
-
-public:
-  void dontUseTrampGuard() { useTrampGuard = false; }
-  void markAs_MTonly() { mt_only = true; }
-  void canUseTrap(bool t) { allow_trap = t; }
-  bool is_MTonly() { return mt_only; }
-
-  std::string func;                 /* function to instrument */
-  std::string inst;                 /* inst. function to place at func */
-  std::string lib;                  /* library name */
-  int where;                   /* FUNC_ENTRY, FUNC_EXIT, FUNC_CALL */
-  callWhen when;               /* callPreInsn, callPostInsn */
-  callOrder order;             /* orderFirstAtPoint, orderLastAtPoint */
-  std::vector<Dyninst::DyninstAPI::codeGenASTPtr> args;      /* what to pass as arg0 ... n */
-  bool useTrampGuard;
-  bool mt_only;
-  bool allow_trap;
-  std::vector<Dyninst::PatchAPI::InstancePtr> instances;
-};
 
 /*
  * Generate an instruction.

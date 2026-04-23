@@ -106,6 +106,7 @@ set(_private_headers
     src/infHeap.h
     src/inst-aarch64.h
     src/inst.h
+    src/instMapping.h
     src/instPoint.h
     src/inst-power.h
     src/inst-x86.h
@@ -176,7 +177,6 @@ set(_sources
     src/hybridOverwrites.C
     src/image.C
     src/infHeap.C
-    src/inst.C
     src/instPoint.C
     src/mapped_module.C
     src/mapped_object.C
