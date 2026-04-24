@@ -350,7 +350,7 @@ void popStack(codeGen &gen)
 
 //TODO: 32-/64-bit regs?
 void emitImm(opCode op, Register src1, RegValue src2imm, Register dest, 
-        codeGen &gen, registerSpace * /* rs */, bool s)
+        codeGen &gen, bool s)
 {
     switch(op) {
         case plusOp:
@@ -637,7 +637,7 @@ Register EmitterAARCH64::emitCall(opCode op,
 }
 
 
-codeBufIndex_t emitA(opCode op, Register src1, Register, long dest,
+codeBufIndex_t emitA(opCode op, Register src1, long dest,
         codeGen &gen, Dyninst::DyninstAPI::RegControl rc)
 {
     codeBufIndex_t retval = 0;
@@ -666,7 +666,7 @@ codeBufIndex_t emitA(opCode op, Register src1, Register, long dest,
 
 Register emitR(opCode op, Register src1, Register src2, Register dest,
                codeGen &gen,
-               const instPoint *, bool /*for_MT*/)
+               const instPoint *)
 {
     registerSlot *regSlot = NULL;
     unsigned addrWidth = gen.width();
@@ -818,8 +818,8 @@ void emitCSload(const BPatch_addrSpec_NP *, Register, codeGen &) {
 
 void emitVload(opCode op, Address src1, Register src2, Register dest,
                codeGen &gen,
-               registerSpace * /*rs*/, int size,
-               const instPoint * /* location */, AddressSpace *)
+               int size,
+               AddressSpace *)
 {
     switch(op)
     {
@@ -857,8 +857,8 @@ void emitVload(opCode op, Address src1, Register src2, Register dest,
 
 void emitVstore(opCode op, Register src1, Register /*src2*/, Address dest,
         codeGen &gen,
-        registerSpace * /* rs */, int size,
-        const instPoint * /* location */, AddressSpace *)
+        int size,
+        AddressSpace *)
 {
     if (op ==  storeOp) {
         // [dest] = src1
@@ -874,8 +874,8 @@ void emitVstore(opCode op, Register src1, Register /*src2*/, Address dest,
 
 void emitV(opCode op, Register src1, Register src2, Register dest,
         codeGen &gen,
-           registerSpace * /*rs*/, int size,
-           const instPoint * /* location */, AddressSpace *proc, bool s) 
+           int size,
+           AddressSpace *proc, bool s)
 {
     switch(op){
         case plusOp:

@@ -78,8 +78,8 @@ bool operandAST::generateCode_phase2(codeGen &gen, Address &,
 #else
     case operandType::Constant:
       assert(oVar == NULL);
-      emitVload(loadConstOp, (Address)oValue, retReg, retReg, gen, gen.rs(), size,
-                gen.point(), gen.addrSpace());
+      emitVload(loadConstOp, (Address)oValue, retReg, retReg, gen, size,
+                gen.addrSpace());
       break;
 #endif
     case operandType::DataIndir:
@@ -94,7 +94,7 @@ bool operandAST::generateCode_phase2(codeGen &gen, Address &,
       } else {
         tSize = sizeof(long);
       }
-      emitV(loadIndirOp, src, 0, retReg, gen, gen.rs(), tSize, gen.point(),
+      emitV(loadIndirOp, src, 0, retReg, gen, tSize,
             gen.addrSpace());
       gen.rs()->freeRegister(src);
       break;
@@ -105,32 +105,30 @@ bool operandAST::generateCode_phase2(codeGen &gen, Address &,
       break;
     case operandType::variableAddr:
       assert(oVar);
-      emitVariableLoad(loadConstOp, retReg, retReg, gen, gen.rs(), size, gen.point(),
+      emitVariableLoad(loadConstOp, retReg, retReg, gen, size,
                        gen.addrSpace());
       break;
     case operandType::variableValue:
       assert(oVar);
-      emitVariableLoad(loadOp, retReg, retReg, gen, gen.rs(), size, gen.point(),
+      emitVariableLoad(loadOp, retReg, retReg, gen, size,
                        gen.addrSpace());
       break;
     case operandType::ReturnVal:
-      src = emitR(getRetValOp, 0, Dyninst::Null_Register, retReg, gen, gen.point(),
-                  gen.addrSpace()->multithread_capable());
+      src = emitR(getRetValOp, 0, Dyninst::Null_Register, retReg, gen, gen.point());
       REGISTER_CHECK(src);
       if(src != retReg) {
         // Move src to retReg. Can't simply return src, since it was not
         // allocated properly
-        emitImm(orOp, src, 0, retReg, gen, gen.rs());
+        emitImm(orOp, src, 0, retReg, gen);
       }
       break;
     case operandType::ReturnAddr:
-      src = emitR(getRetAddrOp, 0, Dyninst::Null_Register, retReg, gen, gen.point(),
-                  gen.addrSpace()->multithread_capable());
+      src = emitR(getRetAddrOp, 0, Dyninst::Null_Register, retReg, gen, gen.point());
       REGISTER_CHECK(src);
       if(src != retReg) {
         // Move src to retReg. Can't simply return src, since it was not
         // allocated properly
-        emitImm(orOp, src, 0, retReg, gen, gen.rs());
+        emitImm(orOp, src, 0, retReg, gen);
       }
       break;
     case operandType::Param:
@@ -152,24 +150,24 @@ bool operandAST::generateCode_phase2(codeGen &gen, Address &,
           break;
       }
       src = emitR(paramOp, (Address)oValue, Dyninst::Null_Register, retReg, gen,
-                  gen.point(), gen.addrSpace()->multithread_capable());
+                  gen.point());
       REGISTER_CHECK(src);
       if(src != retReg) {
         // Move src to retReg. Can't simply return src, since it was not
         // allocated properly
-        emitImm(orOp, src, 0, retReg, gen, gen.rs());
+        emitImm(orOp, src, 0, retReg, gen);
       }
     } break;
     case operandType::DataAddr:
       assert(oVar == NULL);
       addr = reinterpret_cast<Address>(oValue);
-      emitVload(loadOp, addr, retReg, retReg, gen, NULL, size, gen.point(),
+      emitVload(loadOp, addr, retReg, retReg, gen, size,
                 gen.addrSpace());
       break;
     case operandType::FrameAddr:
       addr = (Address)oValue;
       temp = gen.rs()->allocateRegister(gen);
-      emitVload(loadFrameRelativeOp, addr, temp, retReg, gen, gen.rs(), size, gen.point(),
+      emitVload(loadFrameRelativeOp, addr, temp, retReg, gen, size,
                 gen.addrSpace());
       gen.rs()->freeRegister(temp);
       break;
@@ -178,8 +176,8 @@ bool operandAST::generateCode_phase2(codeGen &gen, Address &,
       // This codeGenAST holds the register number, and loperand holds offset.
       assert(operand_);
       addr = (Address)operand_->getOValue();
-      emitVload(loadRegRelativeOp, addr, (long)oValue, retReg, gen, gen.rs(), size,
-                gen.point(), gen.addrSpace());
+      emitVload(loadRegRelativeOp, addr, (long)oValue, retReg, gen, size,
+                gen.addrSpace());
       break;
     case operandType::ConstantString:
       // XXX This is for the std::string type.  If/when we fix the std::string type
@@ -194,7 +192,7 @@ bool operandAST::generateCode_phase2(codeGen &gen, Address &,
       }
 
       if(!gen.addrSpace()->needsPIC()) {
-        emitVload(loadConstOp, addr, retReg, retReg, gen, gen.rs(), size, gen.point(),
+        emitVload(loadConstOp, addr, retReg, retReg, gen, size,
                   gen.addrSpace());
       } else {
         gen.codeEmitter()->emitLoadShared(loadConstOp, retReg, NULL, true, size, gen, addr);
@@ -235,22 +233,22 @@ int_variable *operandAST::lookUpVar(AddressSpace *as) {
 }
 
 void operandAST::emitVariableLoad(opCode op, Dyninst::Register src2, Dyninst::Register dest,
-                                      codeGen &gen, registerSpace *rs, int size_,
-                                      const instPoint *point, AddressSpace *as) {
+                                      codeGen &gen, int size_,
+                                      AddressSpace *as) {
   int_variable *var = lookUpVar(as);
   if(var && !as->needsPIC(var)) {
-    emitVload(op, var->getAddress(), src2, dest, gen, rs, size_, point, as);
+    emitVload(op, var->getAddress(), src2, dest, gen, size_, as);
   } else {
     gen.codeEmitter()->emitLoadShared(op, dest, oVar, (var != NULL), size_, gen, 0);
   }
 }
 
 void operandAST::emitVariableStore(opCode op, Dyninst::Register src1, Dyninst::Register src2,
-                                       codeGen &gen, registerSpace *rs, int size_,
-                                       const instPoint *point, AddressSpace *as) {
+                                       codeGen &gen, int size_,
+                                       AddressSpace *as) {
   int_variable *var = lookUpVar(as);
   if(var && !as->needsPIC(var)) {
-    emitVstore(op, src1, src2, var->getAddress(), gen, rs, size_, point, as);
+    emitVstore(op, src1, src2, var->getAddress(), gen, size_, as);
   } else {
     gen.codeEmitter()->emitStoreShared(src1, oVar, (var != NULL), size_, gen);
   }

@@ -64,49 +64,37 @@ class image_variable;
 
 // The return value is a magic "hand this in when we update" black box;
 // emitA handles emission of things like ifs that need to be updated later.
-codeBufIndex_t emitA(opCode op, Dyninst::Register src1, Dyninst::Register src2, long dst,
+codeBufIndex_t emitA(opCode op, Dyninst::Register src1, long dst,
                      codeGen &gen, Dyninst::DyninstAPI::RegControl rc);
 
 // for operations requiring a Dyninst::Register to be returned
 // (e.g., getRetValOp, getRetAddrOp, getParamOp)
 Dyninst::Register emitR(opCode op, Dyninst::Register src1, Dyninst::Register src2, Dyninst::Register dst,
                codeGen &gen,
-               const instPoint *location, bool for_multithreaded);
+               const instPoint *location);
 
 // for general arithmetic and logic operations which return nothing
 void     emitV(opCode op, Dyninst::Register src1, Dyninst::Register src2, Dyninst::Register dst,
                codeGen &gen,
-               registerSpace *rs = NULL, int size = 4,
-               const instPoint * location = NULL, AddressSpace * proc = NULL, bool s = true);
+               int size = 4,
+               AddressSpace * proc = NULL, bool s = true);
 
 // for loadOp and loadConstOp (reading from an Dyninst::Address)
 void     emitVload(opCode op, Dyninst::Address src1, Dyninst::Register src2, Dyninst::Register dst,
                    codeGen &gen,
-                   registerSpace *rs = NULL, int size = 4, 
-                   const instPoint * location = NULL, AddressSpace * proc = NULL);
+                   int size = 4,
+                   AddressSpace * proc = NULL);
 
 // for storeOp (writing to an Dyninst::Address)
 void     emitVstore(opCode op, Dyninst::Register src1, Dyninst::Register src2, Dyninst::Address dst,
                     codeGen &gen,
-                    registerSpace *rs = NULL, int size = 4, 
-                    const instPoint * location = NULL, AddressSpace * proc = NULL);
-
-// for loadOp and loadConstOp (reading from an Dyninst::Address)
-void     emitVload(opCode op, const image_variable* src1, Dyninst::Register src2, Dyninst::Register dst,
-                   codeGen &gen,
-                   registerSpace *rs = NULL, int size = 4, 
-                   const instPoint * location = NULL, AddressSpace * proc = NULL);
-
-// for storeOp (writing to an Dyninst::Address)
-void     emitVstore(opCode op, Dyninst::Register src1, Dyninst::Register src2, const image_variable* dst,
-                    codeGen &gen,
-                    registerSpace *rs = NULL, int size = 4, 
-                    const instPoint * location = NULL, AddressSpace * proc = NULL);
+                    int size = 4,
+                    AddressSpace * proc = NULL);
 
 // and the retyped original emitImm companion
 void     emitImm(opCode op, Dyninst::Register src, Dyninst::RegValue src2imm, Dyninst::Register dst,
                  codeGen &gen,
-                 registerSpace *rs = NULL, bool s = true);
+                 bool s = true);
 
 
 //#include "dyninstAPI/h/BPatch_memoryAccess_NP.h"

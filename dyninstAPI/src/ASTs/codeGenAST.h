@@ -181,12 +181,12 @@ public:
   }
 
   virtual void emitVariableStore(opCode, Dyninst::Register, Dyninst::Register, codeGen &,
-                                 registerSpace *, int, const instPoint *, AddressSpace *) {
+                                 int, AddressSpace *) {
     assert(!"Never call this on anything but an operand");
   }
 
   virtual void emitVariableLoad(opCode, Dyninst::Register, Dyninst::Register, codeGen &,
-                                registerSpace *, int, const instPoint *, AddressSpace *) {
+                                int, AddressSpace *) {
     assert(!"Never call this on anything but an operand");
   }
 

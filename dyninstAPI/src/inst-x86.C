@@ -756,7 +756,7 @@ Dyninst::Register emitFuncCall(opCode op,
  * base is the next free position on ibuf where code is to be generated
  */
 
-codeBufIndex_t emitA(opCode op, Dyninst::Register src1, Dyninst::Register /*src2*/, long dest,
+codeBufIndex_t emitA(opCode op, Dyninst::Register src1, long dest,
                      codeGen &gen, Dyninst::DyninstAPI::RegControl rc)
 {
    // retval is the address of the jump (if one is created). 
@@ -789,7 +789,7 @@ codeBufIndex_t emitA(opCode op, Dyninst::Register src1, Dyninst::Register /*src2
 
 Dyninst::Register emitR(opCode op, Dyninst::Register src1, Dyninst::Register src2, Dyninst::Register dest,
                codeGen &gen,
-               const instPoint *location, bool /*for_multithreaded*/)
+               const instPoint *location)
 {
    bool get_addr_of = (src2 != Null_Register);
    switch (op) {
@@ -823,8 +823,8 @@ Dyninst::Register emitR(opCode op, Dyninst::Register src1, Dyninst::Register src
           abort();                  // unexpected op for this emit!
     }
     assert(get_addr_of);
-    emitV(storeIndirOp, src2, 0, dest, gen, gen.rs(),
-          gen.addrSpace()->getAddressWidth(), gen.point(), gen.addrSpace());
+    emitV(storeIndirOp, src2, 0, dest, gen,
+          gen.addrSpace()->getAddressWidth(), gen.addrSpace());
     return(dest);
 }
 
@@ -1043,8 +1043,8 @@ void emitCSload(const BPatch_countSpec_NP *as, Dyninst::Register dest,
 
 void emitVload(opCode op, Address src1, Dyninst::Register src2, Dyninst::Register dest,
                codeGen &gen,
-               registerSpace * /*rs*/, int size,
-               const instPoint * /* location */, AddressSpace * /* proc */)
+               int size,
+               AddressSpace * /* proc */)
 {
    if (op == loadConstOp) {
       // dest is a temporary
@@ -1084,9 +1084,9 @@ void emitVload(opCode op, Address src1, Dyninst::Register src2, Dyninst::Registe
 }
 
 void emitVstore(opCode op, Dyninst::Register src1, Dyninst::Register src2, Address dest,
-                codeGen &gen, registerSpace * /*rs*/,
+                codeGen &gen,
                 int size,
-                const instPoint * /* location */, AddressSpace * /* proc */)
+                AddressSpace * /* proc */)
 {
    if (op ==  storeOp) {
       // [dest] = src1
@@ -1108,8 +1108,8 @@ void emitVstore(opCode op, Dyninst::Register src1, Dyninst::Register src2, Addre
 
 void emitV(opCode op, Dyninst::Register src1, Dyninst::Register src2, Dyninst::Register dest,
            codeGen &gen,
-           registerSpace * /*rs*/, int size,
-           const instPoint * /* location */, AddressSpace * /* proc */, bool s)
+           int size,
+           AddressSpace * /* proc */, bool s)
 {
     assert ((op!=branchOp) && (op!=ifOp));         // !emitA
     assert ((op!=getRetValOp) && (op!=getRetAddrOp) && 
@@ -1197,7 +1197,7 @@ void emitV(opCode op, Dyninst::Register src1, Dyninst::Register src2, Dyninst::R
 }
 
 void emitImm(opCode op, Dyninst::Register src1, RegValue src2imm, Dyninst::Register dest,
-             codeGen &gen, registerSpace *, bool s)
+             codeGen &gen, bool s)
 {
    if (op ==  storeOp) {
        // this doesn't seem to ever be called from ast.C (or anywhere) - gq
