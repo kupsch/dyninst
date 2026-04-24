@@ -33,6 +33,7 @@
 #include <string>
 #include <dlfcn.h>
 
+#include "arch-power.h"
 #include "dyninstAPI/src/linux-power.h"
 #include "dyninstAPI/src/addressSpace.h"
 #include "dyninstAPI/src/dynProcess.h"
@@ -49,19 +50,9 @@ using codeGenASTPtr = Dyninst::DyninstAPI::codeGenASTPtr;
 using nullAST = Dyninst::DyninstAPI::nullAST;
 
 
-// FIXME: HOST+CODEGEN
-// This is a temporary fix as getMaxBranch is used for both host and codegen
-// This file is compiled when host architecture is Power. If codegen isn't for Power, we define the following:
-#if !defined(DYNINST_CODEGEN_ARCH_POWER)
-
-#define MAX_BRANCH      0x01fffffc
-
-Address getMaxBranch() {
+static Address getMaxBranch() {
   return MAX_BRANCH;
 }
-
-#endif
-
 
 #define DLOPEN_MODE (RTLD_NOW | RTLD_GLOBAL)
 

@@ -66,13 +66,6 @@ using namespace boost::assign;
 using codeGenASTPtr = Dyninst::DyninstAPI::codeGenASTPtr;
 using operandAST = Dyninst::DyninstAPI::operandAST;
 
-extern bool isPowerOf2(int value, int &result);
-
-#define DISTANCE(x, y)   ((x<y) ? (y-x) : (x-y))
-
-Address getMaxBranch() {
-    return MAX_BRANCH_OFFSET;
-}
 
 /********************************* EmitterAARCH64SaveRegs ***************************************/
 
