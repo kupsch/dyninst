@@ -109,26 +109,10 @@ void emitASload(const BPatch_addrSpec_NP *as, Dyninst::Register dest, int stackS
 
 void emitCSload(const BPatch_countSpec_NP *as, Dyninst::Register dest, codeGen &gen);
 
-// VG(11/06/01): moved here and added location
-Dyninst::Register emitFuncCall(opCode op, codeGen &gen,
-                      std::vector<Dyninst::DyninstAPI::codeGenASTPtr> &operands,
-                      func_instance *func);
-
 // find these internal functions before finding any other functions
 // extern std::unordered_map<std::string, unsigned> tagDict;
 
 bool writeFunctionPtr(AddressSpace *p, Dyninst::Address addr, func_instance *f);
-
-/**
- * A set of optimized emiters for common idioms.  Return 
- * false if the platform can't perform any optimizations.
- **/
-//Store constant in memory at address
-bool emitStoreConst(Dyninst::Address addr, int imm, codeGen &gen);
-//Add constant to memory at address
-bool emitAddSignedImm(Dyninst::Address addr, long int imm, codeGen &gen);
-//Subtract constant from memory at address
-bool emitSubSignedImm(Dyninst::Address addr, long int imm, codeGen &gen);
 
 inline bool isPowerOf2(int value, int &result) {
   if(value <= 0) {

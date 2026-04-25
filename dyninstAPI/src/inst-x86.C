@@ -731,16 +731,6 @@ unsigned char jccOpcodeFromRelOp(unsigned op, bool s)
    return 0x0;
 }
 
-// this function just multiplexes between the 32-bit and 64-bit versions
-Dyninst::Register emitFuncCall(opCode op,
-                      codeGen &gen,
-                      std::vector<codeGenASTPtr> &operands, 
-                      func_instance *callee)
-{
-    Dyninst::Register reg = gen.codeEmitter()->emitCall(op, gen, operands, callee);
-    return reg;
-}
-
 /*
  * emit code for op(src1,src2, dest)
  * ibuf is an instruction buffer where instructions are generated
@@ -1320,18 +1310,8 @@ bool writeFunctionPtr(AddressSpace *p, Address addr, func_instance *f)
    return p->writeDataSpace((void *) addr, sizeof(Address), &val_to_write);   
 }
 
-bool emitStoreConst(Address addr, int imm, codeGen &gen) {
-   gen.codeEmitter()->emitStoreImm(addr, imm, gen);
-   return true;
-}
-
 bool emitAddSignedImm(Address addr, long int imm, codeGen &gen) {
    gen.codeEmitter()->emitAddSignedImm(addr, imm, gen);
-   return true;
-}
-
-bool emitSubSignedImm(Address addr, long int imm, codeGen &gen) {
-   gen.codeEmitter()->emitAddSignedImm(addr, imm * -1, gen);
    return true;
 }
 
