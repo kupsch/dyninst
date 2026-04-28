@@ -54,6 +54,8 @@ class EmitterAARCH64 : public Emitter {
 public:
     virtual ~EmitterAARCH64() {}
 
+    void emitAddrSpecLoad(const BPatch_addrSpec_NP *as, Dyninst::Register dest, int stackShift, codeGen &gen);
+
     virtual codeBufIndex_t emitIf(Register, Register, Dyninst::DyninstAPI::RegControl, codeGen &);
 
     virtual void emitOp(unsigned, Register, Register, Register, codeGen &);
@@ -129,6 +131,10 @@ public:
     virtual void emitASload(int, int, int, long, Register, int, codeGen &) { assert(0); }
 
     virtual void emitCSload(int, int, int, long, Register, codeGen &) { assert(0); }
+
+    virtual void emitCountSpecLoad(const BPatch_countSpec_NP *, Dyninst::Register, codeGen &) {
+      assert(0);
+    }
 
     virtual void emitPushFlags(codeGen &) { assert(0); }
 

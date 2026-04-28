@@ -37,6 +37,7 @@
 #define _EMITTER_H
 
 #include <assert.h>
+#include "BPatch_memoryAccess_NP.h"
 #include "codeGenAST.h"
 #include <vector>
 #include "codegen/RegControl.h"
@@ -98,7 +99,9 @@ class Emitter {
     virtual void emitGetRetAddr(Register dest, codeGen &gen) = 0;
     virtual void emitGetParam(Register dest, Register param_num, instPoint::Type pt_type, opCode op, bool addr_of, codeGen &gen) = 0;
     virtual void emitASload(int ra, int rb, int sc, long imm, Register dest, int stackShift, codeGen &gen) = 0;
+    virtual void emitAddrSpecLoad(const BPatch_addrSpec_NP *as, Dyninst::Register dest, int stackShift, codeGen &gen) = 0;
     virtual void emitCSload(int ra, int rb, int sc, long imm, Register dest, codeGen &gen) = 0;
+    virtual void emitCountSpecLoad(const BPatch_countSpec_NP *as, Dyninst::Register dest, codeGen &gen) = 0;
     virtual void emitPushFlags(codeGen &gen) = 0;
     virtual void emitRestoreFlags(codeGen &gen, unsigned offset) = 0;
     // Built-in offset...

@@ -752,7 +752,7 @@ void MovePCToReg(Register dest, codeGen &gen) {
 
 // Yuhan(02/04/19): Load in destination the effective address given
 // by the address descriptor. Used for memory access stuff.
-void emitASload(const BPatch_addrSpec_NP *as, Register dest, int stackShift,
+void EmitterAARCH64::emitAddrSpecLoad(const BPatch_addrSpec_NP *as, Register dest, int stackShift,
                 codeGen &gen) {
 
     // Haven't implemented non-zero shifts yet
@@ -790,10 +790,6 @@ void emitASload(const BPatch_addrSpec_NP *as, Register dest, int stackShift,
     // writes at gen+base and updates base, we must update insn..
     if (imm) 
         insnCodeGen::generateAddSubImmediate(gen, insnCodeGen::Add, 0, imm, dest, dest, true);	
-}
-
-void emitCSload(const BPatch_addrSpec_NP *, Register, codeGen &) {
-    assert(0); //Not implemented
 }
 
 void emitVload(opCode op, Address src1, Register src2, Register dest,

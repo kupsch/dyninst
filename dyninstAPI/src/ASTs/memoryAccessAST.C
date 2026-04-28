@@ -88,7 +88,7 @@ bool memoryAccessAST::generateCode_phase2(codeGen &gen, Dyninst::Address &,
         assert(0);
       }
       start = ma->getStartAddr(which_);
-      emitASload(start, retReg, 0, gen);
+      gen.codeEmitter()->emitAddrSpecLoad(start, retReg, 0, gen);
       break;
     }
     case memoryType::BytesAccessed: {
@@ -111,7 +111,7 @@ bool memoryAccessAST::generateCode_phase2(codeGen &gen, Dyninst::Address &,
         assert(0);
       }
       count = ma->getByteCount(which_);
-      emitCSload(count, retReg, gen);
+      gen.codeEmitter()->emitCountSpecLoad(count, retReg, gen);
       break;
     }
     default:

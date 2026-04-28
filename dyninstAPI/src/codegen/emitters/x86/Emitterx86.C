@@ -3,6 +3,7 @@
 #include "arch-x86.h"
 #include "Architecture.h"
 #include "binaryEdit.h"
+#include "BPatch_memoryAccess_NP.h"
 #include "codegen/emitters/x86/Emitterx86.h"
 #include "codegen/RegControl.h"
 #include "debug.h"
@@ -20,6 +21,30 @@
 #include <limits>
 
 namespace Dyninst { namespace DyninstAPI {
+
+  // VG(11/07/01): Load in destination the effective address given
+  // by the address descriptor. Used for memory access stuff.
+  void Emitterx86::emitAddrSpecLoad(const BPatch_addrSpec_NP *as, Dyninst::Register dest, int stackShift,
+                                    codeGen &gen) {
+    // TODO 16-bit registers, rep hacks
+    long imm = as->getImm();
+    int ra = as->getReg(0);
+    int rb = as->getReg(1);
+    int sc = as->getScale();
+
+    gen.codeEmitter()->emitASload(ra, rb, sc, imm, dest, stackShift, gen);
+  }
+
+  void Emitterx86::emitCountSpecLoad(const BPatch_countSpec_NP *as, Dyninst::Register dest, codeGen &gen) {
+    // VG(7/30/02): different from ASload on this platform, no LEA business
+
+    long imm = as->getImm();
+    int ra = as->getReg(0);
+    int rb = as->getReg(1);
+    int sc = as->getScale();
+
+    gen.codeEmitter()->emitCSload(ra, rb, sc, imm, dest, gen);
+  }
 
   Address Emitterx86::getInterModuleFuncAddr(func_instance *func, codeGen &gen) {
     AddressSpace *addrSpace = gen.addrSpace();

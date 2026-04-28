@@ -165,7 +165,11 @@ public:
 
   void emitASload(int ra, int rb, int sc, long imm, Register dest, int stackShift, codeGen &gen);
 
+  void emitAddrSpecLoad(const BPatch_addrSpec_NP *as, Dyninst::Register dest, int stackShift, codeGen &gen);
+
   void emitCSload(int ra, int rb, int sc, long imm, Register dest, codeGen &gen);
+
+  void emitCountSpecLoad(const BPatch_countSpec_NP *as, Dyninst::Register dest, codeGen &gen);
 
   void emitPushFlags(codeGen &gen);
 
