@@ -241,11 +241,9 @@ namespace Dyninst {
 
             //flags
             // Expand NOBITS sections within the object file to their size
-            bool movePHdrsFirst{};
             unsigned loadSecTotalSize{};
 
             bool isStripped{};
-            int library_adjust{};
             ObjectELF *object{};
 
             void (*err_func_)(const char*);
@@ -291,7 +289,6 @@ namespace Dyninst {
             void addDTNeeded(std::string s);
 
             void log_elferror(void (*err_func)(const char *), const char* msg);
-            bool cannotRelocatePhdrs();
 
             std::vector<void*> buffers;
             char* allocate_buffer(size_t);
