@@ -386,15 +386,13 @@ bool emitElf<ElfTypes>::driver(std::string fName) {
     }
 
     // Write the Elf header first!
-    newEhdr = ElfTypes::elf_newehdr(
-            newElf);
+    newEhdr = ElfTypes::elf_newehdr(newElf);
     if (!newEhdr) {
         log_elferror(err_func_, "newEhdr failed\n");
         return false;
     }
-    oldEhdr = ElfTypes::elf_getehdr(
-            oldElf);
-    memcpy(newEhdr, oldEhdr, sizeof(Elf_Ehdr));
+    oldEhdr = ElfTypes::elf_getehdr(oldElf);
+    *newEhdr = *oldEhdr;
 
     newEhdr->e_shnum += newSecs.size();
 
