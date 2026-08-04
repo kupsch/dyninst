@@ -166,8 +166,7 @@ bool emitElf<ElfTypes>::createElfSymbol(Symbol *symbol, unsigned strIndex, vecto
     // OPD-based systems
     if (symbol->getPtrOffset()) {
         sym->st_value = symbol->getPtrOffset() + offset_adjust;
-    }
-    else if (symbol->getOffset()) {
+    } else {
         sym->st_value = symbol->getOffset() + offset_adjust;
     }
 
