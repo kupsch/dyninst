@@ -49,6 +49,18 @@
 namespace Dyninst {
 
 /*
+ * read_memory_as<TYPE>(&r, addr)
+ *
+ * Assign to r the object of TYPE created by reading sizeof(r) bytes at addr.
+ * The address addr does not have to be properly aligned for the type.
+ */
+template <typename ResultType>
+inline void read_memory_as(ResultType &r, const void *addr)
+{
+    std::memcpy(static_cast<void *>(&r), addr, sizeof r);
+}
+
+/*
  * read_memory_as<TYPE>(addr)
  *
  * Return an object of TYPE created by reading sizeof(TYPE) bytes at addr.
@@ -58,7 +70,7 @@ template <typename ResultType>
 inline ResultType read_memory_as(const void *addr)
 {
     ResultType r;
-    std::memcpy(static_cast<void *>(&r), addr, sizeof r);
+    read_memory_as(r, addr);
     return r;
 }
 
