@@ -50,15 +50,7 @@ using namespace Dyninst::SymtabAPI;
 using namespace std;
 
 unsigned int elfHash(const std::string &name) {
-    unsigned int h = 0, g;
-
-    for (auto c : name) {
-        h = (h << 4) + c;
-        if ((g = h & 0xf0000000))
-            h ^= g >> 24;
-        h &= ~g;
-    }
-    return h;
+    return elf_hash(name.c_str());      // calll elfutils function
 }
 
 template<class ElfTypes>
@@ -986,29 +978,29 @@ void emitElf<ElfTypes>::fixPhdrs() {
     data->d_version = 1;
 }
 
-#if !defined(DT_GNU_HASH)
+#ifndef DT_GNU_HASH
 #define DT_GNU_HASH 0x6ffffef5
 #endif
-#if !defined(DT_GNU_CONFLICT)
+#ifndef DT_GNU_CONFLICT
 #define DT_GNU_CONFLICT 0x6ffffef8
 #endif
-#if !defined(DT_TLSDESC_PLT)
+#ifndef DT_TLSDESC_PLT
 #define DT_TLSDESC_PLT 0x6ffffef6
 #endif
-#if !defined(DT_TLSDESC_GOT)
+#ifndef DT_TLSDESC_GOT
 #define DT_TLSDESC_GOT 0x6ffffef7
 #endif
 // Older elf.h headers may not define RELR dynamic tag constants
-#if !defined(DT_RELRSZ)
+#ifndef DT_RELRSZ
 #define DT_RELRSZ 35
 #endif
-#if !defined(DT_RELR)
+#ifndef DT_RELR
 #define DT_RELR 36
 #endif
-#if !defined(DT_RELRENT)
+#ifndef DT_RELRENT
 #define DT_RELRENT 37
 #endif
-#if !defined(SHT_RELR)
+#ifndef SHT_RELR
 #define SHT_RELR 19
 #endif
 
@@ -1755,8 +1747,8 @@ bool emitElf<ElfTypes>::createSymbolTables(set<Symbol *> &allSymbols) {
             if (secTagRegionMapping.find(DT_HASH) != secTagRegionMapping.end()) {
                 name = secTagRegionMapping[DT_HASH]->getRegionName();
                 obj->addRegion(0, hashsecData, hashsecSize * sizeof(Elf_Word), name, Region::RT_HASH, true);
-            } else if (secTagRegionMapping.find(0x6ffffef5) != secTagRegionMapping.end()) {
-                name = secTagRegionMapping[0x6ffffef5]->getRegionName();
+            } else if (secTagRegionMapping.find(DT_GNU_HASH) != secTagRegionMapping.end()) {
+                name = secTagRegionMapping[DT_GNU_HASH]->getRegionName();
                 obj->addRegion(0, hashsecData, hashsecSize * sizeof(Elf_Word), name, Region::RT_HASH, true);
             } else {
                 name = ".hash";
@@ -2337,7 +2329,7 @@ void emitElf<ElfTypes>::createDynamicSection(void *dynData_, unsigned size, Elf_
         switch (dyns[i].d_tag) {
             case DT_NULL:
                 break;
-            case 0x6ffffef5: // DT_GNU_HASH (not defined on all platforms)
+            case DT_GNU_HASH:
                 if (!foundHashSection) {
                     dynsecData[curpos].d_tag = DT_HASH;
                     dynsecData[curpos].d_un.d_ptr = dyns[i].d_un.d_ptr;
