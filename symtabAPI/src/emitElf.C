@@ -517,7 +517,7 @@ bool emitElf<ElfTypes>::driver(std::string fName, std::set<Symbol *> &allSymbols
     std::unordered_map<string, unsigned> newNameIndexMapping;
 
     std::unordered_set<string> updateLinkInfoSecs = {
-        ".dynsym", /*".dynstr",*/ ".rela.dyn", ".rela.plt", ".dynamic", ".symtab"};
+        ".dynsym", /*".dynstr",*/ ".rela.dyn", ".rela.plt", ".dynamic"};
     std::unordered_map<string, pair<unsigned, unsigned>> dataLinkInfo;
 
     bool createdLoadableSections = false;
