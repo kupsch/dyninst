@@ -30,6 +30,7 @@
 
 #include "addressSpace.h"
 #include "codeRange.h"
+#include <algorithm>
 #include "dynproc/dynProcess.h"
 #include "patching/function.h"
 #include "binaryEdit.h"
@@ -659,6 +660,21 @@ bool AddressSpace::findFuncsByAll(const std::string &funcname,
             }
          }
       }
+   }
+
+   // A name can resolve both to a real definition and, in every object that
+   // imports it, to a PLT stub. Keep only the definitions. A stub is not
+   // instrumentable -- parse_func::isInstrumentable() rejects linkage
+   // addresses -- so selecting one does no useful work, and it forces the
+   // caller to touch an object it never asked about. If every match is a
+   // stub, keep them all: callers resolving a call target by name rely on
+   // finding the importing object's stub.
+   auto const added = res.begin() + starting_entries;
+   auto const is_plt_stub = [](func_instance *f) { return f->ifunc()->isPLTFunction(); };
+   bool const has_definition = std::any_of(added, res.end(),
+         [&is_plt_stub](func_instance *f) { return !is_plt_stub(f); });
+   if (has_definition)  {
+      res.erase(std::remove_if(added, res.end(), is_plt_stub), res.end());
    }
 
    return (res.size() != starting_entries);

@@ -1490,7 +1490,7 @@ image::image(fileDescriptor &desc,
    {
         startup_printf("%s[%d]: ERROR: findMain analysis has failed!\n",
                 FILE__, __LINE__);
-   } else {
+   }  else  {
         startup_printf("%s[%d]: findMain analysis succeeded.\n",
                 FILE__, __LINE__);
    }
