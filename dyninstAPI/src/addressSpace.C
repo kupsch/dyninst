@@ -662,13 +662,14 @@ bool AddressSpace::findFuncsByAll(const std::string &funcname,
       }
    }
 
-   // A name can resolve both to a real definition and, in every object that
-   // imports it, to a PLT stub. Keep only the definitions. A stub is not
-   // instrumentable -- parse_func::isInstrumentable() rejects linkage
-   // addresses -- so selecting one does no useful work, and it forces the
-   // caller to touch an object it never asked about. If every match is a
-   // stub, keep them all: callers resolving a call target by name rely on
-   // finding the importing object's stub.
+   // We did not ask for PLT stubs above, but one can still reach us: each
+   // mapped_object returns its allFunctionsByMangledName cache rather than
+   // what the image matched, and addFunction() enters stubs into that cache
+   // under the imported name.  So filter here too: keep only the definitions
+   // when the name also resolved to one.  A stub is not instrumentable --
+   // parse_func::isInstrumentable() rejects linkage addresses -- so selecting
+   // one does no useful work, and it forces the caller to touch an object it
+   // never asked about.  If every match is a stub, keep them all.
    auto const added = res.begin() + starting_entries;
    auto const is_plt_stub = [](func_instance *f) { return f->ifunc()->isPLTFunction(); };
    bool const has_definition = std::any_of(added, res.end(),
@@ -706,7 +707,8 @@ bool AddressSpace::findFuncsByPretty(const std::string &funcname,
 
 bool AddressSpace::findFuncsByMangled(const std::string &funcname,
                                       std::vector<func_instance *> &res,
-                                      const std::string &libname) { // = "", btw
+                                      const std::string &libname,
+                                      bool includePLTStubs) { // libname = "", btw
    unsigned starting_entries = res.size(); // We'll return true if we find something
 
    for (unsigned i = 0; i < mapped_objects.size(); i++) {
@@ -714,7 +716,7 @@ bool AddressSpace::findFuncsByMangled(const std::string &funcname,
           mapped_objects[i]->fileName() == libname.c_str() ||
           mapped_objects[i]->fullName() == libname.c_str()) {
          const std::vector<func_instance *> *mangled = 
-            mapped_objects[i]->findFuncVectorByMangled(funcname);
+            mapped_objects[i]->findFuncVectorByMangled(funcname, includePLTStubs);
          if (mangled) {
             for (unsigned mm = 0; mm < mangled->size(); mm++) {
                res.push_back((*mangled)[mm]);
