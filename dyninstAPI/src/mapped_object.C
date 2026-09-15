@@ -47,6 +47,7 @@
 #include "patching/instPoint.h"
 #include <boost/tuple/tuple.hpp>
 #include "BPatch_image.h"
+#include "BPatch.h"
 #include "PatchCFG.h"
 #include "PCProcess.h"
 #include "compiler_annotations.h"
@@ -139,10 +140,20 @@ mapped_object *mapped_object::createMappedObject(fileDescriptor &desc,
        parseGaps = false;
    }
    assert(desc.file() != "");
+
+   // Consult the user's analysis exclusion patterns.  This is the single
+   // funnel for every object: initial libraries, dlopen, and binary
+   // rewriting.  image::image ignores the answer for the executable and the
+   // runtime library.
+   bool analyze = true;
+   if (BPatch::bpatch != NULL)  {
+      analyze = !BPatch::bpatch->analysisExcluded(desc.file().c_str());
+   }
+
    startup_printf("%s[%d]:  about to parseImage\n", FILE__, __LINE__);
    startup_printf("%s[%d]: name %s, codeBase 0x%lx, dataBase 0x%lx\n",
                   FILE__, __LINE__, desc.file().c_str(), desc.code(), desc.data());
-   image *img = image::parseImage( desc, analysisMode, parseGaps);
+   image *img = image::parseImage( desc, analysisMode, parseGaps, analyze);
    if (!img)  {
       startup_printf("%s[%d]:  failed to parseImage\n", FILE__, __LINE__);
       return NULL;

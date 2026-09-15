@@ -40,6 +40,7 @@
 #include "BPatch_callbacks.h"
 #include <set>
 #include <string>
+#include <vector>
 #include "dyntypes.h"
 #include "dyninstversion.h"
 #include "compiler_diagnostics.h"
@@ -140,6 +141,10 @@ class DYNINST_EXPORT BPatch {
     /* Note: several bpatch constructs have "access everything" behavior, 
        which will trigger full parsing. This should be looked into. */
     bool delayedParsing_;
+
+    /* Wildcard patterns naming shared objects that are loaded but not
+       analyzed.  Static so that adding one does not change sizeof(BPatch). */
+    static std::vector<std::string> analysisExcludePatterns_;
 
     bool instrFrames;
 
@@ -647,6 +652,31 @@ public:
     //  Globally specify that any function with a given name will not return
     
     void  addNonReturningFunc(std::string name);
+
+    //  BPatch::addAnalysisExcludePattern:
+    //  Shared objects whose name matches this shell-style wildcard pattern
+    //  (see fnmatch(3): '*', '?', '[...]') are still loaded -- their symbols,
+    //  address ranges and modules remain available -- but no CFG is built for
+    //  them, so they contain no functions or blocks.  This avoids the cost of
+    //  parsing libraries that will never be instrumented.
+    //
+    //  The pattern is matched against both the object's full path and its base
+    //  name, so "libLLVM.so*" matches "/usr/lib64/libLLVM.so.23.0git".
+    //
+    //  The executable and the Dyninst runtime library are never excluded.
+    //  Patterns must be added before the process or binary is created.
+
+    void  addAnalysisExcludePattern(const char *pattern);
+
+    //  BPatch::clearAnalysisExcludePatterns:
+    //  Discard all patterns added by addAnalysisExcludePattern.
+
+    void  clearAnalysisExcludePatterns();
+
+    //  BPatch::analysisExcluded:
+    //  True if \p name matches any pattern added by addAnalysisExcludePattern.
+
+    bool  analysisExcluded(const char *name) const;
 };
 
 

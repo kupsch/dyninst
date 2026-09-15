@@ -1158,7 +1158,8 @@ void image::findModByAddr (const Symbol *lookUp, vector<Symbol *> &mods,
 
 image *image::parseImage(fileDescriptor &desc, 
                          BPatch_hybridMode mode, 
-                         bool parseGaps)
+                         bool parseGaps,
+                         bool analyze)
 {
   /*
    * Check to see if we have parsed this image before. We will
@@ -1190,7 +1191,7 @@ image *image::parseImage(fileDescriptor &desc,
 #endif
 
   startup_printf("%s[%d]:  about to create image\n", FILE__, __LINE__);
-  image *ret = new image(desc, err, mode, parseGaps); 
+  image *ret = new image(desc, err, mode, parseGaps, analyze); 
   if(err) {
     return nullptr;
   }
@@ -1267,6 +1268,9 @@ int image::destroy() {
 }
 
 void image::analyzeIfNeeded() {
+  if (analysisExcluded_)  {
+      return;
+  }
   if (parseState_ == symtab) {
       parsing_printf("ANALYZING IMAGE %s\n",
               file().c_str());
@@ -1383,7 +1387,8 @@ void image::analyzeImage() {
 image::image(fileDescriptor &desc, 
              bool &err, 
              BPatch_hybridMode mode, 
-             bool parseGaps) :
+             bool parseGaps,
+             bool analyze) :
    desc_(desc),
    imageOffset_(0),
    imageLen_(0),
@@ -1405,6 +1410,7 @@ image::image(fileDescriptor &desc,
    trackNewBlocks_(false),
    refCount(1),
    parseState_(unparsed),
+   analysisExcluded_(false),
    parseGaps_(parseGaps),
    mode_(mode),
    arch(Dyninst::Arch_none)
@@ -1495,6 +1501,11 @@ image::image(fileDescriptor &desc,
                 FILE__, __LINE__);
    }
 
+   // Needed below to decide whether this object may be excluded from
+   // analysis; it is only two symbol lookups.
+   startup_printf("%s[%d]:  before determineImageType\n", FILE__, __LINE__);
+   determineImageType();
+
    // Initialize ParseAPI 
    filt = NULL;
 
@@ -1507,13 +1518,34 @@ image::image(fileDescriptor &desc,
     } nuke_heap;
     filt = &nuke_heap;
 
+   /** An excluded object gets no hints at all, so its CodeObject is empty
+       rather than holding entry-less HINT stubs: CodeObject::process_hints()
+       runs before the ignoreParse check below, and record_hint_functions()
+       would otherwise publish Functions whose entry() is NULL. **/
+   struct filt_all : SymtabCodeSource::hint_filt {
+        bool operator()(SymtabAPI::Function *)
+        {
+            return true;
+        }
+    } nuke_all;
+
+   // The executable and the runtime library are always analyzed.
+   analysisExcluded_ = !analyze && isSharedLibrary() && !isDyninstRTLib();
+   if (analysisExcluded_)  {
+       startup_printf("%s[%d]: excluded from analysis, building no CFG for %s\n",
+                      FILE__, __LINE__, desc.file().c_str());
+       filt = &nuke_all;
+       parseGaps_ = false;
+   }
+
    bool parseInAllLoadableRegions = (BPatch_normalMode != mode_);
    cs_ = new SymtabCodeSource(linkedFile,filt,parseInAllLoadableRegions);
 
    // Continue ParseAPI init
    img_fact_ = new Dyninst::DyninstAPI::DynCFGFactory(this);
    parse_cb_ = new Dyninst::DyninstAPI::DynParseCallback(this);
-   obj_ = new CodeObject(cs_,img_fact_,parse_cb_,BPatch_defensiveMode == mode);
+   obj_ = new CodeObject(cs_,img_fact_,parse_cb_,BPatch_defensiveMode == mode,
+                         analysisExcluded_);
 
      if (obj_->cs()->getArch() == Arch_ppc64) {
         // The PowerPC new ABI typically generate two entries per function.
@@ -1544,9 +1576,6 @@ image::image(fileDescriptor &desc,
    statusLine(msg.c_str());
 
 
-   // Check if image is libdyninstRT
-   startup_printf("%s[%d]:  before determineImageType\n", FILE__, __LINE__);
-   determineImageType();
    if (isDyninstRTLib()) { // don't parse gaps in the runtime library
        parseGaps_ = false;
    }
