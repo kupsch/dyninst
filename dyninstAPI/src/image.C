@@ -1565,6 +1565,10 @@ image::image(fileDescriptor &desc,
         {
             return true;
         }
+        bool filterEntryPoint()
+        {
+            return true;
+        }
     } nuke_all;
 
    // The executable and the runtime library are always analyzed; neither the
