@@ -185,6 +185,10 @@ Patterns must be added before the process is created or the binary is opened, si
 is analyzed at the point it is loaded. The executable and the Dyninst runtime library are
 never excluded.
 
+Dyninst itself resolves a handful of functions by name during process creation, among them
+\code{pthread\_self} in \code{libpthread}. Excluding a library that Dyninst needs this way can
+make process creation fail; it reports the failure rather than continuing silently.
+
 Excluding a library the mutator later queries is not an error, but lookups into it find
 nothing: its functions cannot be found by name or by address, \code{BPatch\_object::findFunction}
 returns no match, and per-module queries such as \code{BPatch\_module::getProcedures} come back
@@ -209,6 +213,39 @@ bool analysisExcluded(const char *name)
 \apidesc{
 Return true if \code{name} matches any pattern passed to \code{addAnalysisExcludePattern},
 using the same matching rules.
+}
+
+\begin{apient}
+typedef bool (*BPatchAnalyzeObjectCallback)(Dyninst::SymtabAPI::Symtab *symtab)
+
+BPatchAnalyzeObjectCallback
+registerAnalyzeObjectCallback(BPatchAnalyzeObjectCallback func)
+\end{apient}
+
+\apidesc{
+Register a callback that decides whether a shared object is analyzed, and return the
+previously registered callback, or NULL. Where \code{addAnalysisExcludePattern} matches on a
+name known in advance, this decides from the object's contents: the callback is passed that
+object's \code{Symtab}, so it can consult the size of the symbol table --
+\code{getAllFunctionsRef().size()} -- or anything else SymtabAPI exposes. Skipping every
+library above some number of functions, for instance, cannot be written as a pattern.
+
+The callback is invoked once per shared object as the object is loaded, after its symbol table
+has been read but before any control flow graph is built. Returning false leaves the object
+loaded but unparsed, exactly as a matching pattern would; returning true analyzes it normally.
+
+It is not consulted for the executable, for the Dyninst runtime library, or for an object that
+a pattern has already excluded. It must be registered before the process is created or the
+binary is opened, and, because it runs inside the load path, it must not call back into
+Dyninst.
+}
+
+\begin{apient}
+BPatchAnalyzeObjectCallback getAnalyzeObjectCallback()
+\end{apient}
+
+\apidesc{
+Return the currently registered analysis callback, or NULL if none has been registered.
 }
 
 \begin{apient}
