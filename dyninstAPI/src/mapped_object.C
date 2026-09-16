@@ -146,14 +146,16 @@ mapped_object *mapped_object::createMappedObject(fileDescriptor &desc,
    // rewriting.  image::image ignores the answer for the executable and the
    // runtime library.
    bool analyze = true;
+   BPatchAnalyzeObjectCallback analyzeCB = NULL;
    if (BPatch::bpatch != NULL)  {
       analyze = !BPatch::bpatch->analysisExcluded(desc.file().c_str());
+      analyzeCB = BPatch::bpatch->getAnalyzeObjectCallback();
    }
 
    startup_printf("%s[%d]:  about to parseImage\n", FILE__, __LINE__);
    startup_printf("%s[%d]: name %s, codeBase 0x%lx, dataBase 0x%lx\n",
                   FILE__, __LINE__, desc.file().c_str(), desc.code(), desc.data());
-   image *img = image::parseImage( desc, analysisMode, parseGaps, analyze);
+   image *img = image::parseImage( desc, analysisMode, parseGaps, analyze, analyzeCB);
    if (!img)  {
       startup_printf("%s[%d]:  failed to parseImage\n", FILE__, __LINE__);
       return NULL;

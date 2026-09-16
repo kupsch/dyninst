@@ -140,6 +140,10 @@ class DYNINST_EXPORT BPatch {
        analyzed.  Static so that adding one does not change sizeof(BPatch). */
     static std::vector<std::string> analysisExcludePatterns_;
 
+    /* Consulted for each shared object not already excluded by pattern.
+       Static for the same reason. */
+    static BPatchAnalyzeObjectCallback analyzeObjectCallback_;
+
     bool instrFrames;
 
 	/* this is used to denote the fully qualified name of the prelink command on linux */
@@ -660,6 +664,29 @@ public:
     //  True if \p name matches any pattern added by addAnalysisExcludePattern.
 
     bool  analysisExcluded(const char *name) const;
+
+    //  BPatch::registerAnalyzeObjectCallback:
+    //  Register a callback deciding whether a shared object is analyzed.  It
+    //  is invoked once per shared object as the object is loaded, after its
+    //  symbol table has been read but before any CFG is built, and is passed
+    //  that object's Symtab.  Returning false leaves the object loaded but
+    //  unparsed, exactly as addAnalysisExcludePattern does; returning true
+    //  analyzes it normally.
+    //
+    //  Unlike the patterns, this can decide from the object's contents -- for
+    //  instance, skipping any library with more than some number of functions.
+    //  It is not consulted for the executable, for the Dyninst runtime
+    //  library, or for an object a pattern has already excluded.
+    //
+    //  The callback runs inside the load path, so it must not call back into
+    //  Dyninst.  Returns the previously registered callback, or NULL.
+
+    BPatchAnalyzeObjectCallback registerAnalyzeObjectCallback(BPatchAnalyzeObjectCallback func);
+
+    //  BPatch::getAnalyzeObjectCallback:
+    //  Return the currently registered callback, or NULL if there is none.
+
+    BPatchAnalyzeObjectCallback getAnalyzeObjectCallback() const;
 };
 
 

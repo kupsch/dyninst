@@ -1159,7 +1159,8 @@ void image::findModByAddr (const Symbol *lookUp, vector<Symbol *> &mods,
 image *image::parseImage(fileDescriptor &desc, 
                          BPatch_hybridMode mode, 
                          bool parseGaps,
-                         bool analyze)
+                         bool analyze,
+                         BPatchAnalyzeObjectCallback analyzeCB)
 {
   /*
    * Check to see if we have parsed this image before. We will
@@ -1191,7 +1192,7 @@ image *image::parseImage(fileDescriptor &desc,
 #endif
 
   startup_printf("%s[%d]:  about to create image\n", FILE__, __LINE__);
-  image *ret = new image(desc, err, mode, parseGaps, analyze); 
+  image *ret = new image(desc, err, mode, parseGaps, analyze, analyzeCB); 
   if(err) {
     return nullptr;
   }
@@ -1388,7 +1389,8 @@ image::image(fileDescriptor &desc,
              bool &err, 
              BPatch_hybridMode mode, 
              bool parseGaps,
-             bool analyze) :
+             bool analyze,
+             BPatchAnalyzeObjectCallback analyzeCB) :
    desc_(desc),
    imageOffset_(0),
    imageLen_(0),
@@ -1529,8 +1531,13 @@ image::image(fileDescriptor &desc,
         }
     } nuke_all;
 
-   // The executable and the runtime library are always analyzed.
-   analysisExcluded_ = !analyze && isSharedLibrary() && !isDyninstRTLib();
+   // The executable and the runtime library are always analyzed; neither the
+   // patterns nor the callback is consulted for them.  A pattern match
+   // short-circuits, so the callback only sees objects that survived it.
+   if (isSharedLibrary() && !isDyninstRTLib())  {
+       analysisExcluded_ = !analyze ||
+                           (analyzeCB != NULL && !(*analyzeCB)(linkedFile));
+   }
    if (analysisExcluded_)  {
        startup_printf("%s[%d]: excluded from analysis, building no CFG for %s\n",
                       FILE__, __LINE__, desc.file().c_str());

@@ -54,6 +54,7 @@
 #include "dyninstAPI/src/codeRange.h"
 #include "dynproc/infHeap.h"
 #include "dyninstAPI/h/BPatch_enums.h"
+#include "dyninstAPI/h/BPatch_callbacks.h"
 #include "parsing/DynCFGFactory.h"
 #include "parsing/DynParseCallback.h"
 
@@ -259,12 +260,15 @@ class image : public codeRange {
    friend class image_variable;
    friend class Dyninst::DyninstAPI::DynCFGFactory;
  public:
-   // analyze == false: load the object but build no CFG for it.  Ignored for
-   // the executable and for the Dyninst runtime library, which always parse.
+   // analyze == false: load the object but build no CFG for it.  If analyze
+   // is true and analyzeCB is non-NULL, analyzeCB decides, and is passed the
+   // object's Symtab.  Both are ignored for the executable and for the
+   // Dyninst runtime library, which always parse.
    static image *parseImage(fileDescriptor &desc, 
                             BPatch_hybridMode mode,
                             bool parseGaps,
-                            bool analyze = true);
+                            bool analyze = true,
+                            BPatchAnalyzeObjectCallback analyzeCB = NULL);
 
    // And to get rid of them if we need to re-parse
    static void removeImage(image *img);
@@ -278,7 +282,8 @@ class image : public codeRange {
    image(fileDescriptor &desc, bool &err, 
          BPatch_hybridMode mode,
          bool parseGaps,
-         bool analyze = true);
+         bool analyze = true,
+         BPatchAnalyzeObjectCallback analyzeCB = NULL);
 
    void analyzeIfNeeded();
    bool analysisExcluded() const { return analysisExcluded_; }

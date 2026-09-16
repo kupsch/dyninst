@@ -1898,6 +1898,9 @@ void BPatch::addNonReturningFunc(std::string name)
 std::vector<std::string> BPatch::analysisExcludePatterns_;
 
 
+BPatchAnalyzeObjectCallback BPatch::analyzeObjectCallback_ = NULL;
+
+
 void BPatch::addAnalysisExcludePattern(const char *pattern)
 {
   if (pattern && *pattern)  {
@@ -1909,6 +1912,21 @@ void BPatch::addAnalysisExcludePattern(const char *pattern)
 void BPatch::clearAnalysisExcludePatterns()
 {
   analysisExcludePatterns_.clear();
+}
+
+
+BPatchAnalyzeObjectCallback
+BPatch::registerAnalyzeObjectCallback(BPatchAnalyzeObjectCallback func)
+{
+  BPatchAnalyzeObjectCallback previous = analyzeObjectCallback_;
+  analyzeObjectCallback_ = func;
+  return previous;
+}
+
+
+BPatchAnalyzeObjectCallback BPatch::getAnalyzeObjectCallback() const
+{
+  return analyzeObjectCallback_;
 }
 
 
