@@ -89,6 +89,19 @@ namespace Dyninst { namespace DyninstAPI {
       }
     }
     if (!st->findFuncByEntryOffset(stf, addr)) {
+      // No symbol at all, in an object being parsed one function at a time:
+      // on ppc64 this is what a call inside the object looks like, since ELFv2
+      // gives a function two entry points and a symbol only at the global one.
+      // Note the owner so the image can bring it in and pair the two entries,
+      // which is the state a full parse would have reached.
+      if (_img->analysisExcluded() && addr > 8 &&
+          obj->cs()->getArch() == Arch_ppc64 &&
+          st->findSymbolByOffset(addr).empty()) {
+        SymtabAPI::Function *gep{};
+        if (st->findFuncByEntryOffset(gep, addr - 8)) {
+          _img->notePowerGlobalEntry(gep);
+        }
+      }
       stf = st->createFunction(name, addr, 0, pdmod->mod());
     } else {
       pdmod = _img->getOrCreateModule(stf->getModule());
