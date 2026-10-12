@@ -35,6 +35,66 @@ namespace {
     }
   };
 
+
+  // ARM and AArch64 mark each run of code or data with a mapping symbol -- $a,
+  // $d, $t or $x, optionally followed by '.' and more -- at the address the run
+  // begins.  They are untyped and they sit exactly where a function can start,
+  // so they would otherwise be taken for its name.  They name a stretch of the
+  // section, not anything in it.
+  bool isMappingSymbol(const std::string &name) {
+    if (name.size() < 2 || name[0] != '$') {
+      return false;
+    }
+    if (name[1] != 'a' && name[1] != 'd' && name[1] != 't' && name[1] != 'x') {
+      return false;
+    }
+    return name.size() == 2 || name[2] == '.';
+  }
+
+
+  // Whether this symbol is one whose name a function may take.
+  //
+  // It is almost always an untyped one.  Symtab aggregates every ST_FUNCTION
+  // and ST_INDIRECT symbol into a Function keyed by offset, and the caller has
+  // already looked this address up in that same map, so a typed symbol here
+  // would have been found there.  What reaches us is ST_NOTYPE or ST_CODE:
+  // hand-written assembly routinely labels an entry point without typing it,
+  // and such a name is still the one the author gave it.  ST_FUNCTION is
+  // accepted anyway for the one case that escapes the map -- in a relocatable
+  // file an offset does not identify a symbol, so those functions are
+  // deliberately kept out of it.
+  bool namesAFunction(Dyninst::SymtabAPI::Symbol *sym) {
+    using Dyninst::SymtabAPI::Symbol;
+    Symbol::SymbolType t = sym->getType();
+    if (t != Symbol::ST_FUNCTION && t != Symbol::ST_NOTYPE && t != Symbol::ST_CODE) {
+      return false;
+    }
+    return !sym->getMangledName().empty() && !isMappingSymbol(sym->getMangledName());
+  }
+
+
+  // Several symbols can share an address, and the order findSymbolByOffset
+  // returns them in is not defined, so without a total order the name a
+  // function reports would vary.  Prefer a typed symbol, then a global one,
+  // then the name that sorts first.
+  bool outranks(Dyninst::SymtabAPI::Symbol *lhs, Dyninst::SymtabAPI::Symbol *rhs) {
+    using Dyninst::SymtabAPI::Symbol;
+    auto rank = [](Symbol *s) {
+      int r = 0;
+      if (s->getType() == Symbol::ST_FUNCTION) {
+        r += 2;
+      }
+      if (s->getLinkage() == Symbol::SL_GLOBAL) {
+        r += 1;
+      }
+      return r;
+    };
+    if (rank(lhs) != rank(rhs)) {
+      return rank(lhs) > rank(rhs);
+    }
+    return lhs->getMangledName() < rhs->getMangledName();
+  }
+
 }
 
 namespace Dyninst { namespace DyninstAPI {
@@ -89,6 +149,31 @@ namespace Dyninst { namespace DyninstAPI {
       }
     }
     if (!st->findFuncByEntryOffset(stf, addr)) {
+      // The parser hands us an invented targ<addr> for a function it found by
+      // following control flow rather than from a hint.  When the symbol table
+      // names that address, that name is the real one and belongs on the
+      // function: an object excluded from analysis is parsed with no hints at
+      // all, so everything an on-demand parse reaches arrives here unnamed
+      // even though its symbol was there the whole time.
+      //
+      // Only for an excluded object.  An ordinary parse arrives here with its
+      // hints already applied, and whatever it has not named by now it has
+      // decided not to name; renaming there would change what every existing
+      // caller of an ordinary parse sees.
+      SymtabAPI::Symbol *best{};
+      if (_img->analysisExcluded()) {
+        for (auto *sym : st->findSymbolByOffset(addr)) {
+          if (!namesAFunction(sym)) {
+            continue;
+          }
+          if (!best || outranks(sym, best)) {
+            best = sym;
+          }
+        }
+      }
+      if (best) {
+        name = best->getMangledName();
+      }
       stf = st->createFunction(name, addr, 0, pdmod->mod());
     } else {
       pdmod = _img->getOrCreateModule(stf->getModule());
