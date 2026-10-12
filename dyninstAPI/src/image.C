@@ -1967,8 +1967,67 @@ parse_func *image::parseExcludedFunction(SymtabAPI::Function *symFunc)
    parse_func *ret = static_cast<parse_func *>(symFunc->getData());
    if (obj_->cs()->getArch() == Arch_ppc64)  {
       checkPowerPreamble(ret, NULL);
+      parsePowerGlobalEntries();
    }
    return ret;
+}
+
+
+// The two instructions ELFv2 puts at a global entry point, read straight from
+// the image rather than from a block: the whole point is that this entry has
+// not been parsed, so there is nothing to ask.  Same encodings as
+// CheckForPowerPreamble -- addis r2,r12 in a library, lis r2 in an executable,
+// each followed by addi r2,r2.
+bool image::powerPreambleAt(Address addr) const
+{
+   if (!cs_->isValidAddress(addr) || !cs_->isValidAddress(addr + 4))  {
+      return false;
+   }
+   const void *p = cs_->getPtrToInstruction(addr);
+   if (p == NULL)  { return false; }
+
+   const uint32_t *w = static_cast<const uint32_t *>(p);
+   uint32_t p1 = w[0] >> 16;
+   uint32_t p2 = w[1] >> 16;
+   return (p1 == 0x3c4c || p1 == 0x3c40) && p2 == 0x3842;
+}
+
+
+void image::notePowerGlobalEntry(SymtabAPI::Function *gep)
+{
+   if (gep == NULL || !powerPreambleAt(gep->getOffset()))  {
+      return;
+   }
+   if (notedPowerGlobalEntries_.insert(gep->getOffset()).second)  {
+      pendingPowerGlobalEntries_.push_back(gep);
+   }
+}
+
+
+// A call inside the object goes to the callee's local entry point, where ELFv2
+// puts no symbol, so the recursive parse creates a nameless function there and
+// nothing ties it to the symbol eight bytes earlier.  A full parse never looks
+// like that: the hint parses the global entry first, so the local entry is a
+// block inside it, and checkPowerPreamble pairs the two.
+//
+// Parse each global entry the parse ran into and pair it, so an on-demand parse
+// arrives at the same place.  Parsing one can reach further local entries, which
+// append to the list, so this drains rather than iterates; notePowerGlobalEntry
+// keeps an offset from being queued twice.
+void image::parsePowerGlobalEntries()
+{
+   while (!pendingPowerGlobalEntries_.empty())  {
+      SymtabAPI::Function *gep = pendingPowerGlobalEntries_.back();
+      pendingPowerGlobalEntries_.pop_back();
+
+      if (gep->getData() == NULL)  {
+         parsing_printf("[%s:%d] on-demand parse of global entry %s in %s\n",
+                        FILE__, __LINE__, gep->getName().c_str(),
+                        file().c_str());
+         obj_->parse(gep->getOffset(), true);
+      }
+      checkPowerPreamble(static_cast<parse_func *>(gep->getData()), NULL);
+   }
 }
 
 

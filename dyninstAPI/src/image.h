@@ -288,6 +288,11 @@ class image : public codeRange {
    parse_func *parseExcludedFunction(Dyninst::SymtabAPI::Function *symFunc);
    void checkPowerPreamble(parse_func *funct,
                            const std::map<uint64_t, parse_func *> *overlaps);
+
+   // Record a global entry point the parse reached only through its local
+   // entry.  Ignored unless the two instructions of an ELFv2 preamble are
+   // really there.  See parsePowerGlobalEntries.
+   void notePowerGlobalEntry(Dyninst::SymtabAPI::Function *gep);
    bool isParsed() { return parseState_ == analyzed; }
    parse_func* addFunction(Address functionEntryAddr, const char *name=NULL);
 
@@ -326,6 +331,9 @@ class image : public codeRange {
    /*********************************************************************/
    // Find a function that begins at a particular address
    parse_func *findFuncByEntry(const Address &entry);
+
+   void parsePowerGlobalEntries();
+   bool powerPreambleAt(Address addr) const;
    // Code sharing allows multiple functions to overlap a given point
    int findFuncs(const Address offset, set<ParseAPI::Function *> & funcs);
    // Find the basic blocks that overlap the given address
@@ -512,6 +520,12 @@ class image : public codeRange {
    // Excluded from analysis: no CFG was built up front.  A function is
    // parsed on demand when it is looked up by name.
    bool analysisExcluded_;
+
+   // Global entry points the on-demand parse reached through a call to the
+   // local entry 8 bytes later, and the offsets already noted.  Drained by
+   // parsePowerGlobalEntries once the parse that found them is done.
+   vector<Dyninst::SymtabAPI::Function *> pendingPowerGlobalEntries_;
+   std::set<Address> notedPowerGlobalEntries_;
    bool parseGaps_;
    BPatch_hybridMode mode_;
    Dyninst::Architecture arch;
