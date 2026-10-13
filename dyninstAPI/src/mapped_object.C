@@ -115,6 +115,7 @@ mapped_object::mapped_object(fileDescriptor fileDesc,
        analysisMode_ = BPatch_normalMode;
    }
    tocBase = 0;
+   powerPairedLinked_ = 0;
 }
 
 mapped_object *mapped_object::createMappedObject(Library::const_ptr lib,
@@ -219,6 +220,7 @@ mapped_object::mapped_object(const mapped_object *s, AddressSpace *child) :
 
    image_ = s->image_->clone();
    tocBase = s->tocBase;
+   powerPairedLinked_ = 0;
 }
 
 
@@ -402,6 +404,7 @@ const std::vector<func_instance *> *mapped_object::findFuncVectorByPretty(const 
        // A function parsed on demand missed the pass in createMappedObject.
        linkPowerPreamble(func);
    }
+   linkPendingPowerPreambles();
    delete img_funcs;
    return allFunctionsByPrettyName[funcname];
 }
@@ -440,6 +443,7 @@ const std::vector <func_instance *> *mapped_object::findFuncVectorByMangled(cons
        // A function parsed on demand missed the pass in createMappedObject.
        linkPowerPreamble(func);
     }
+    linkPendingPowerPreambles();
     delete img_funcs;
     return allFunctionsByMangledName[funcname];
 }
@@ -671,6 +675,28 @@ void mapped_object::linkPowerPreamble(parse_func *f)
    }
    preambleFunc->setNoPowerPreambleFunc(noPreambleFunc);
    noPreambleFunc->setPowerPreambleFunc(preambleFunc);
+}
+
+
+// A pairing the image made while parsing one function on demand.  The calls
+// below link what a lookup by name returned, which is enough for the function
+// that was asked for; it is not enough for the one it calls, since a call
+// inside an excluded object lands on a local entry that nobody looks up by
+// name.  Without this the two func_instances stay unlinked and
+// BPatch_point::getCalledFunction keeps reporting the nameless local entry,
+// which is the state a full parse never leaves behind.
+//
+// The list only grows and the image may back more than one mapped object, so
+// this walks forward from where it left off rather than draining it.
+void mapped_object::linkPendingPowerPreambles()
+{
+   if (parse_img()->codeObject()->cs()->getArch() != Arch_ppc64)  {
+      return;
+   }
+   const vector<parse_func *> &paired = parse_img()->powerPairedFuncs();
+   while (powerPairedLinked_ < paired.size())  {
+      linkPowerPreamble(paired[powerPairedLinked_++]);
+   }
 }
 
 

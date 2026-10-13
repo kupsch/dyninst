@@ -293,6 +293,15 @@ class image : public codeRange {
    // entry.  Ignored unless the two instructions of an ELFv2 preamble are
    // really there.  See parsePowerGlobalEntries.
    void notePowerGlobalEntry(Dyninst::SymtabAPI::Function *gep);
+
+   // The functions parsePowerGlobalEntries paired, in the order it paired
+   // them.  A mapped_object has to link the func_instances behind each pair;
+   // the list only grows, so each tracks how far it has got rather than
+   // draining it, since one image can back several mapped objects.
+   const vector<parse_func *> &powerPairedFuncs() const
+   {
+      return powerPairedFuncs_;
+   }
    bool isParsed() { return parseState_ == analyzed; }
    parse_func* addFunction(Address functionEntryAddr, const char *name=NULL);
 
@@ -526,6 +535,9 @@ class image : public codeRange {
    // parsePowerGlobalEntries once the parse that found them is done.
    vector<Dyninst::SymtabAPI::Function *> pendingPowerGlobalEntries_;
    std::set<Address> notedPowerGlobalEntries_;
+
+   // Global entries paired with their local entry, for powerPairedFuncs.
+   vector<parse_func *> powerPairedFuncs_;
    bool parseGaps_;
    BPatch_hybridMode mode_;
    Dyninst::Architecture arch;

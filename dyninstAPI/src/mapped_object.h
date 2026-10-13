@@ -310,6 +310,10 @@ public:
     // layer.  Safe to call more than once for the same function.
     void linkPowerPreamble(parse_func *f);
 
+    // ppc64 only; no-op elsewhere.  Links what the image paired while parsing
+    // on demand, which no lookup by name will ask about.
+    void linkPendingPowerPreambles();
+
     int_variable *findVariable(image_variable *img_var);
 
     block_instance *findBlock(ParseAPI::Block *);
@@ -350,6 +354,9 @@ public:
 
     Address   dataBase_; // Where the data starts...
     Address   tocBase;
+
+    // How much of image::powerPairedFuncs this object has linked.
+    size_t powerPairedLinked_;
 
     void set_short_name();
 
