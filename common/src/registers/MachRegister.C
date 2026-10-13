@@ -33,6 +33,14 @@ namespace Dyninst {
     registers::all_regs[getArchitecture()].push_back(*this);
   }
 
+  // Used by the register definitions in dyn_regs.C.  Taking the name as a
+  // 'const char *' keeps a std::string temporary, and its cleanup, out of
+  // each of their ~3000 initializers, which made that file slow to compile.
+  MachRegister::MachRegister(signed int r, const char *n) : MachRegister(r) {
+    registers::names.emplace(r, n);
+    registers::all_regs[getArchitecture()].push_back(*this);
+  }
+
   unsigned int MachRegister::regClass() const { return reg & 0x00ff0000; }
 
   int32_t MachRegister::getLengthID() const {
