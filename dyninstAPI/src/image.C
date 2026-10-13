@@ -2008,7 +2008,19 @@ void image::parsePowerGlobalEntries()
                         file().c_str());
          obj_->parse(gep->getOffset(), true);
       }
-      checkPowerPreamble(static_cast<parse_func *>(gep->getData()), NULL);
+      parse_func *gepFunc = static_cast<parse_func *>(gep->getData());
+      checkPowerPreamble(gepFunc, NULL);
+
+      // Pairing these two is only half of it.  What a caller sees -- the
+      // callee of a call site, through BPatch_point::getCalledFunction -- is
+      // the link between the func_instances the two stand for, and that is
+      // made by mapped_object::linkPowerPreamble.  Everything else reaches
+      // that through a lookup by name, which is exactly what the callee of a
+      // call inside an excluded object never gets, so hand the pair over
+      // rather than wait to be asked for it.
+      if (gepFunc != NULL && gepFunc->getNoPowerPreambleFunc() != NULL)  {
+         powerPairedFuncs_.push_back(gepFunc);
+      }
    }
 }
 
