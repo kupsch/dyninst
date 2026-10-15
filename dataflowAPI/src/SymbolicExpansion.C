@@ -33,11 +33,7 @@
 
 #include "../rose/SgAsmInstruction.h"
 #include "../rose/SgAsmPowerpcInstruction.h"
-#include "../rose/SgAsmx86Instruction.h"
 #include "../rose/SgAsmRiscv64Instruction.h"
-
-#include "../rose/x86InstructionSemantics.h"
-#include "../rose/x86_64InstructionSemantics.h"
 
 #include "../rose/semantics/DispatcherARM64.h"
 #include "../rose/semantics/DispatcherAMDGPU.h"
@@ -48,34 +44,6 @@
 
 using namespace Dyninst;
 using namespace DataflowAPI;
-
-bool SymbolicExpansion::expandX86(SgAsmInstruction *rose_insn,
-                                  SymEvalPolicy &policy) {
-    SgAsmx86Instruction *insn = static_cast<SgAsmx86Instruction *>(rose_insn);
-    X86InstructionSemantics<SymEvalPolicy, Handle> t(policy);
-    try {
-        t.processInstruction(insn);
-    } catch (rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::Exception &e) {
-      expand_printf("Failed to process instruction '%s': %s\n", rose_insn->get_mnemonic().c_str(), e.what());
-      return false;
-    }
-    return true;
-}
-
-bool SymbolicExpansion::expandX86_64(SgAsmInstruction *rose_insn,
-                                     SymEvalPolicy_64 &policy) {
-    SgAsmx86Instruction *insn = static_cast<SgAsmx86Instruction *>(rose_insn);
-    X86_64InstructionSemantics<SymEvalPolicy_64, Handle> t(policy);
-
-    try {
-        t.processInstruction(insn);
-    } catch (rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::Exception &e) {
-      expand_printf("Failed to process instruction '%s': %s\n", rose_insn->get_mnemonic().c_str(), e.what());
-      return false;
-    }
-
-    return true;
-}
 
 bool SymbolicExpansion::expandPPC32(SgAsmInstruction *rose_insn,
                                     BaseSemantics::RiscOperatorsPtr ops, 

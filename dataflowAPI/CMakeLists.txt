@@ -112,6 +112,8 @@ set(
   ${PROJECT_SOURCE_DIR}/dataflowAPI/src/slicing.C
   ${PROJECT_SOURCE_DIR}/dataflowAPI/src/stackanalysis.C
   ${PROJECT_SOURCE_DIR}/dataflowAPI/src/SymbolicExpansion.C
+  ${PROJECT_SOURCE_DIR}/dataflowAPI/src/SymbolicExpansion-x86.C
+  ${PROJECT_SOURCE_DIR}/dataflowAPI/src/SymbolicExpansion-x86_64.C
   ${PROJECT_SOURCE_DIR}/dataflowAPI/src/SymEval.C
   ${PROJECT_SOURCE_DIR}/dataflowAPI/src/SymEvalPolicy.C
   ${PROJECT_SOURCE_DIR}/dataflowAPI/src/Visitors.C
