@@ -136,10 +136,9 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang)$")
   endforeach()
 endif()
 
-# If -Wframe-larger-than is available adjust the value to allow for larger frames based on
-# compiler version and build type for the following file:
-#
-# instructionAPI/src/AMDGPU/gfx90a/InstructionDecoder-amdgpu-gfx90a.C (includes instructionAPI/src/AMDGPU/gfx90a/finalizeOperands.C)
+# If -Wframe-larger-than is available, raise its limit for Debug builds, whose
+# frames are larger, and for the riscv InstructionAPI tests, each of which builds
+# its list of test cases in one function.
 #
 if(HAS_CPP_FLAG_Wframe_larger_than AND NOT DYNINST_DISABLE_DIAGNOSTIC_SUPPRESSIONS)
   # Override the default frame size maximum for DEBUG (-O0) build types as there stack
@@ -147,19 +146,6 @@ if(HAS_CPP_FLAG_Wframe_larger_than AND NOT DYNINST_DISABLE_DIAGNOSTIC_SUPPRESSIO
   #
   add_compile_options($<$<CONFIG:DEBUG>:-Wframe-larger-than=${defaultDebugMaxFrameSize}>)
 
-  # Use worst-case values discovered so far.  For some environments and compiler
-  # configurations the following are needed:
-  #
-  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    # most gcc's are under the default using -Og, but rhel's requires 30000
-    set(debugMaxFrameSizeOverrideFinalizeOperands 30000)
-    if("${CMAKE_CXX_COMPILER_VERSION}" MATCHES "^[6](\.|$)")
-      set(nonDebugMaxFrameSizeOverrideFinalizeOperands 30000)
-    endif()
-  elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    set(debugMaxFrameSizeOverrideFinalizeOperands 29000)
-    set(nonDebugMaxFrameSizeOverrideFinalizeOperands 29000)
-  endif()
   set(maxFrameSizeOverrideRiscvInstructionApiTests 49152)
 endif()
 
