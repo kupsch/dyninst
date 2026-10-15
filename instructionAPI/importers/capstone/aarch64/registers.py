@@ -44,7 +44,7 @@ class registers:
             cap_dir + "/include/capstone/aarch64.h"
         )
         self.dyninst = _read_dyninst_registers(
-            dyn_dir + "/common/h/registers/aarch64_regs.h"
+            dyn_dir + "/common/h/registers/aarch64_regs.def"
         )
         spec_sysregs = aarch64.sysregs.parse_xml_specs(spec_dir)
 
