@@ -31,8 +31,6 @@
 #include <vector>
 #include <map>
 
-#include <boost/assign/list_of.hpp>
-
 #include "Architecture.h"
 #include "common/src/stats.h"
 #include "dyntypes.h"
