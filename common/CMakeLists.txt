@@ -173,24 +173,6 @@ if("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
   endif()
 endif()
 
-# adjust warning threshold if set in cmake/warnings.cmake
-if(debugMaxFrameSizeOverrideSyscallInformation)
-  set_source_files_properties(
-    src/MachSyscall.C
-    PROPERTIES
-      COMPILE_FLAGS
-        $<$<CONFIG:DEBUG>:-Wframe-larger-than=${debugMaxFrameSizeOverrideSyscallInformation}>
-  )
-endif()
-if(nonDebugMaxFrameSizeOverrideSyscallInformation)
-  set_source_files_properties(
-    src/MachSyscall.C
-    PROPERTIES
-      COMPILE_FLAGS
-        $<$<NOT:$<CONFIG:DEBUG>>:-Wframe-larger-than=${nonDebugMaxFrameSizeOverrideSyscallInformation}>
-  )
-endif()
-
 dyninst_library(
   common
   PUBLIC_HEADER_FILES ${_public_headers}
