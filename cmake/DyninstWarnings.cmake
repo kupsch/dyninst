@@ -137,9 +137,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang)$")
 endif()
 
 # If -Wframe-larger-than is available adjust the value to allow for larger frames based on
-# compiler version and build type for the following 3 files:
+# compiler version and build type for the following 2 files:
 #
-# instructionAPI/src/InstructionDecoder-power.C (includes instructionAPI/src/power-opcode-table.C)
 # instructionAPI/src/AMDGPU/gfx90a/InstructionDecoder-amdgpu-gfx90a.C (includes instructionAPI/src/AMDGPU/gfx90a/finalizeOperands.C)
 # common/src/MachSyscall.C (includes common/src/SyscallInformation.C)
 #
@@ -150,28 +149,17 @@ if(HAS_CPP_FLAG_Wframe_larger_than AND NOT DYNINST_DISABLE_DIAGNOSTIC_SUPPRESSIO
   add_compile_options($<$<CONFIG:DEBUG>:-Wframe-larger-than=${defaultDebugMaxFrameSize}>)
 
   # Use worst-case values discovered so far.  For most gcc versions SyscallInformation.C
-  # stack frame size is less than than the default and InstructionDecoder-power.C is
-  # less than 76800, but for some environments and compiler configurations the following
-  # are needed:
+  # stack frame size is less than than the default, but for some environments and
+  # compiler configurations the following are needed:
   #
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     set(debugMaxFrameSizeOverrideSyscallInformation 81920)
-    set(debugMaxFrameSizeOverridePowerOpcodeTable 358400)
-    if("${CMAKE_CXX_COMPILER_VERSION}" MATCHES "^[7](\.|$)")
-      set(nonDebugMaxFrameSizeOverridePowerOpcodeTable 38912)
-    endif()
     # most gcc's are under the default using -Og, but rhel's requires 30000
     set(debugMaxFrameSizeOverrideFinalizeOperands 30000)
     if("${CMAKE_CXX_COMPILER_VERSION}" MATCHES "^[6](\.|$)")
       set(nonDebugMaxFrameSizeOverrideFinalizeOperands 30000)
     endif()
   elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    if("${CMAKE_CXX_COMPILER_VERSION}" VERSION_LESS "22.0.0")
-      set(debugMaxFrameSizeOverridePowerOpcodeTable 40000)
-    else()
-      set(debugMaxFrameSizeOverridePowerOpcodeTable 30000)
-    endif()
-    set(nonDebugMaxFrameSizeOverridePowerOpcodeTable 38000)
     set(debugMaxFrameSizeOverrideFinalizeOperands 29000)
     set(nonDebugMaxFrameSizeOverrideFinalizeOperands 29000)
   endif()
