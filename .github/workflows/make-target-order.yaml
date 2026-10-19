@@ -1,0 +1,71 @@
+name: Make target order
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [ master ]
+    # What decides the build's target order: the CMake code, and the check
+    # itself.
+    paths:
+       - '**.cmake'
+       - '**CMakeLists.txt'
+       - '.github/scripts/check_make_target_order.py'
+       - '.github/workflows/make-target-order.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+
+  # Don't run the check if the PR is a draft
+  check-if-needed:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.draft == false }}
+    steps:
+      - shell: bash
+        run: true
+
+  make-target-order:
+    runs-on: ubuntu-latest
+    needs: check-if-needed
+    permissions:
+      packages: read
+    container:
+      image: ghcr.io/dyninst/amd64/ubuntu-25.04-base:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.github_token }}
+    steps:
+      - name: Checkout Dyninst
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Python
+        shell: bash
+        run: |
+          set -ex
+          # The base image has no Python of its own.
+          command -v python3 || {
+            apt-get -qq update
+            apt-get -qq install -y --no-install-recommends python3
+          }
+
+      - name: Configure
+        shell: bash
+        run: |
+          set -ex
+          # Static libraries are where an ordering goes missing; the tests
+          # add the most targets.  Configuring is enough: nothing is built.
+          cmake -S . -B build -G "Unix Makefiles" \
+                -DENABLE_STATIC_LIBS=ON -DDYNINST_ENABLE_TESTS=ALL
+
+      - name: Check the target order
+        shell: bash
+        run: |
+          # Every target that links or archives another target's objects
+          # must be built after it, or a parallel make can fail with
+          # "No rule to make target ...".
+          python3 .github/scripts/check_make_target_order.py build

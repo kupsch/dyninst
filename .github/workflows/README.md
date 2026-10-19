@@ -193,6 +193,14 @@ This runs libabigail's `abidiff` utility to compare the current changes against 
 
 **when**: on pull request to the master branch when source code changes, or manually
 
+### Make target order ([workflows/make-target-order](workflows/make-target-order.yaml))
+
+*Checks that a Makefile build orders every target after the objects it uses*
+
+A static library archives the objects of the object libraries it links, and a shared library links them, but with the Makefile generator only the other target's own Makefile can build those objects. A target that is not ordered after it fails with "No rule to make target ..." whenever its link step runs first, so a parallel `make` fails or not depending on timing (`CMAKE_OPTIMIZE_DEPENDENCIES` dropping the order for static libraries did this, #2509). The job configures with `-G "Unix Makefiles" -DENABLE_STATIC_LIBS=ON -DDYNINST_ENABLE_TESTS=ALL`, builds nothing, and runs [scripts/check_make_target_order.py](scripts/check_make_target_order.py), which compares the objects each target's `build.make` uses with the targets `CMakeFiles/Makefile2` makes it wait for. To run it locally, configure a Makefile build tree and pass it to the script.
+
+**when**: on pull requests to the master branch that change a CMake file, the script, or the workflow itself; or manually
+
 ### Pull request checks ([workflows/pr-tests](workflows/pr-tests.yaml))
 
 *Runs battery of tests on every pull request that changes source code*
