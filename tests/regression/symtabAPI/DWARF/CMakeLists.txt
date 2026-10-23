@@ -89,11 +89,21 @@ target_link_libraries(${_targ} PRIVATE symtabAPI)
 if(DYNINST_ENABLE_EXTERNAL_BINARY_TESTS)
   # 32 threads catches a shared libdw handle even on a two-core machine. Each
   # run is a fresh process; the serial parse and eight parallel ones take
-  # well under a second.
+  # well under a second. A walk that corrupts libdw's trees can loop forever
+  # instead of crashing, hence the timeout.
+  #
+  # shared_types_dwz.so keeps its shared types in partial units of its own
+  # (single-file dwz, #2410); shared_types_alt_a.so in the supplementary file
+  # shared_types.dwz (multi-file dwz, #914).
   set(_bin_dir "${DYNINST_TEST_BINARIES_DIR}/symtabAPI/DWARF/parallel_parse")
-  add_test(
-    NAME symtabAPI_${_targ}_test
-    COMMAND ${_targ} "${_bin_dir}/shared_types_dwz.so" 32 8
-  )
-  set_tests_properties(symtabAPI_${_targ}_test PROPERTIES LABELS "regression")
+  foreach(_bin shared_types_dwz shared_types_alt_a)
+    add_test(
+      NAME symtabAPI_${_targ}_${_bin}_test
+      COMMAND ${_targ} "${_bin_dir}/${_bin}.so" 32 8
+    )
+    set_tests_properties(
+      symtabAPI_${_targ}_${_bin}_test
+      PROPERTIES LABELS "regression" TIMEOUT 60
+    )
+  endforeach()
 endif()
