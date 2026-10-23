@@ -151,6 +151,19 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   if(SEARCH_DIRS MATCHES "libraries:[ ]?[=]?(.+)\n")
     set(DYNINST_COMPILER_SEARCH_DIRS ${CMAKE_MATCH_1})
   endif()
+
+  # Rewriting a 32-bit static binary links the 32-bit libgcc.a, which is only
+  # in the compiler's 32-bit multilib directory. The rewriter skips archives of
+  # the wrong word size, so these follow the native directories.
+  if(BUILD_RTLIB_32)
+    execute_process(
+      COMMAND ${CMAKE_CXX_COMPILER} -m32 -print-search-dirs
+      OUTPUT_VARIABLE SEARCH_DIRS_32
+    )
+    if(SEARCH_DIRS_32 MATCHES "libraries:[ ]?[=]?(.+)\n")
+      string(APPEND DYNINST_COMPILER_SEARCH_DIRS ":${CMAKE_MATCH_1}")
+    endif()
+  endif()
 endif()
 
 foreach(t ${dyninstAPI_TARGETS})
