@@ -150,7 +150,7 @@ if(BUILD_RTLIB_32)
       # Both shared and static should be named 'dyninstAPI_RT_m32'- only extension differs
       set_property(TARGET ${t} PROPERTY OUTPUT_NAME dyninstAPI_RT_m32)
 
-      target_sources(${t} PRIVATE ${static_sources} src/RTstatic_ctors_dtors-x86.c)
+      target_sources(${t} PRIVATE ${_static_sources})
       target_compile_definitions(${t} PRIVATE DYNINST_RT_STATIC_LIB)
       target_compile_options(${t} PRIVATE "${DYNINST_C_32BIT_STATIC_RUNTIME_FLAG}")
       target_link_options(${t} PRIVATE "${DYNINST_C_32BIT_STATIC_RUNTIME_FLAG}")
